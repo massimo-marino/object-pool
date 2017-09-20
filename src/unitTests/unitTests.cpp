@@ -4,7 +4,6 @@
  * and open the template in the editor.
  */
 
-#include "../objectCreator.h"
 #include "../objectPool.h"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
