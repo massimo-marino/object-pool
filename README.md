@@ -9,7 +9,9 @@ C++ implementation of an object pool
   http://media.wiley.com/product_ancillary/50/11188580/DOWNLOAD/c25_code.zip
 
  From the original source file:
-** --- cit ON**
+ 
+**--- cit ON**
+
 *Provides an object pool that can be used with any class that provides a default constructor.*
 
 *The object pool constructor creates a pool of objects, which it hands out
@@ -26,6 +28,7 @@ repeatedly. The object pool is most suited to applications that use large
 numbers of objects with expensive constructors for short periods of time, if
 a profiler tells you that allocating and deallocating these objects is a
 bottleneck.*
+
 **--- cit OFF**
 
  It is also possible to create an object pool providing a non-default ctor for
