@@ -188,18 +188,22 @@ public:
   // Allocates m_poolSize new objects and adds them to m_FreeList
   auto allocatePool() const noexcept(false)
   {
+    // generate a lambda that will invoke the right ctor
+    std::function<std::unique_ptr<T>()> lambdaCtor {};
+    if (m_f)
+    {
+      // this lambda invokes the (non-default) ctor registered at object pool creation
+      lambdaCtor = [this]() { return m_f(); };
+    }
+    else
+    {
+      // this lambda invokes the default ctor
+      lambdaCtor = []() { return std::make_unique<T>(); };
+    }
+
     for (size_t i = 0; i < m_poolSize; ++i)
     {
-      if (m_f)
-      {
-        // invoke the (non-default) ctor registered at object pool creation
-        m_FreeList.emplace(m_f());
-      }
-      else
-      {
-        // invoke the default ctor
-        m_FreeList.emplace(std::make_unique<T>());
-      }
+      m_FreeList.emplace(lambdaCtor());
       ++m_objectsCreated;
     }
 
