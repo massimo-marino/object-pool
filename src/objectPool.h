@@ -100,15 +100,15 @@ public:
   objectPool(const objectPool& src) = delete;
   objectPool& operator=(const objectPool& rhs) = delete;
 
-	// Create an object pool with poolSize objects.
-	// Whenever the object pool runs out of objects, poolSize more objects will be
+  // Create an object pool with poolSize objects.
+  // Whenever the object pool runs out of objects, poolSize more objects will be
   // added to the pool.
   // The pool only grows: Objects are never removed from the pool (freed),
   // until the pool is destroyed.
-	//
-	// Throw invalid_argument if poolSize or hardLimitMaxObjects is <= 0 or if
+  //
+  // Throw invalid_argument if poolSize or hardLimitMaxObjects is <= 0 or if
   // poolSize > hardLimitMaxObjects
-	// Throw bad_alloc if allocation fails
+  // Throw bad_alloc if allocation fails
   explicit objectPool(const int64_t poolSize,
                       const int64_t hardLimitMaxObjects = m_kdefaultHardLimitMaxObjects) noexcept(false)
   :
@@ -130,11 +130,11 @@ public:
     allocatePool();
   }
           
-	// The type of smart pointer returned by acquireObject()
-	using Object = std::shared_ptr<T>;
+  // The type of smart pointer returned by acquireObject()
+  using Object = std::shared_ptr<T>;
 
-	// Reserve an object for use
-	auto acquireObject() const noexcept(false)
+  // Reserve an object for use
+  auto acquireObject() const noexcept(false)
   {
     bool isObjectOverflow {};
 
@@ -182,13 +182,13 @@ public:
   // the ctor registered at object pool creation; it's nullptr if not registered
   object_creator::object_creator_fun<T> m_f {};
 
- 	// m_FreeList stores the objects that are not currently in use by clients
-	mutable std::queue<std::unique_ptr<T>> m_FreeList {};
+  // m_FreeList stores the objects that are not currently in use by clients
+  mutable std::queue<std::unique_ptr<T>> m_FreeList {};
 
-	// Allocates m_poolSize new objects and adds them to m_FreeList
-	auto allocatePool() const noexcept(false)
+  // Allocates m_poolSize new objects and adds them to m_FreeList
+  auto allocatePool() const noexcept(false)
   {
-	  for (size_t i = 0; i < m_poolSize; ++i)
+    for (size_t i = 0; i < m_poolSize; ++i)
     {
       if (m_f)
       {
@@ -201,7 +201,7 @@ public:
         m_FreeList.emplace(std::make_unique<T>());
       }
       ++m_objectsCreated;
-	  }
+    }
 
     return std::make_tuple(getFreeListSize(),
                            getNumberOfObjectsCreated(),
