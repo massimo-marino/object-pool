@@ -70,10 +70,10 @@ namespace object_pool
 class objectPoolBase
 {
  protected:
-	static const int64_t m_kDefaultPoolSize;
-	static const int64_t m_kdefaultHardLimitMaxObjects;
-	size_t m_poolSize;
-	size_t m_HardLimitMaxObjects;
+  static const int64_t m_kDefaultPoolSize;
+  static const int64_t m_kdefaultHardLimitMaxObjects;
+  size_t m_poolSize;
+  size_t m_HardLimitMaxObjects;
 
  public:
   // delegating ctor
