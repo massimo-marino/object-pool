@@ -28,7 +28,7 @@ TEST (objectCreator, test_1)
     }
 
     explicit
-    A(const int x) noexcept
+    A(const int& x) noexcept
     :
     _x(x)
     {
@@ -37,7 +37,7 @@ TEST (objectCreator, test_1)
     }
 
     explicit
-    A(const int x, const int y) noexcept
+    A(const int& x, const int& y) noexcept
     :
     _x(x),
     _y(y)
@@ -47,7 +47,7 @@ TEST (objectCreator, test_1)
     }
 
     explicit
-    A(const int x, const int y, const int z) noexcept
+    A(const int& x, const int& y, const int& z) noexcept
     :
     _x(x),
     _y(y),
@@ -70,18 +70,18 @@ TEST (objectCreator, test_1)
       return _z;
     }
 
-    void set_x(const int x) const noexcept
-    {
-      _x = x;
-    }
-    void set_y(const int y) const noexcept
-    {
-      _y = y;
-    }
-    void set_z(const int z) const noexcept
-    {
-      _z = z;
-    }
+//    void set_x(const int& x) const noexcept
+//    {
+//      _x = x;
+//    }
+//    void set_y(const int& y) const noexcept
+//    {
+//      _y = y;
+//    }
+//    void set_z(const int& z) const noexcept
+//    {
+//      _z = z;
+//    }
 
     void display_object (const std::string& prompt = "") const noexcept
     {
@@ -108,24 +108,24 @@ TEST (objectCreator, test_1)
 
   using Object = std::unique_ptr<A>;
   
-  object_creator::object_creator_fun<A> l {};
+  object_creator::object_creator_fun<A> objectCreatorFun {};
 
-  l = object_creator::create_object_creator_fun<A>();
-  Object o0 = l();
+  objectCreatorFun = object_creator::create_object_creator_fun<A>();
+  Object o0 = objectCreatorFun();
 
   {
-    l = object_creator::create_object_creator_fun<A, const int>(123);
+    objectCreatorFun = object_creator::create_object_creator_fun<A, const int>(123);
   }
-  Object o1 = l();
+  Object o1 = objectCreatorFun();
 
-  l = object_creator::create_object_creator_fun<A,const int>(456);
-  Object o2 = l();
+  objectCreatorFun = object_creator::create_object_creator_fun<A,const int>(456);
+  Object o2 = objectCreatorFun();
 
-  l = object_creator::create_object_creator_fun<A,const int, const int>(11, 22);
-  Object o3 = l();
+  objectCreatorFun = object_creator::create_object_creator_fun<A,const int, const int>(11, 22);
+  Object o3 = objectCreatorFun();
 
-  l = object_creator::create_object_creator_fun<A,const int, const int, const int>(11, 22, 33);
-  Object o4 = l();
+  objectCreatorFun = object_creator::create_object_creator_fun<A,const int, const int, const int>(11, 22, 33);
+  Object o4 = objectCreatorFun();
 
   ASSERT_EQ(o0.get()->get_x(), 0);
   ASSERT_EQ(o0.get()->get_y(), 0);
@@ -150,13 +150,13 @@ TEST (objectCreator, test_1)
 //  o4.get()->display_object("o4: ");
 
   {
-    l = object_creator::create_object_creator_fun<A, const int, const int, const int>(99, 88, 77);
+    objectCreatorFun = object_creator::create_object_creator_fun<A, const int, const int, const int>(99, 88, 77);
 
     std::vector<Object> v {};
     for (int i = 1; i <= 5; ++i)
     {
       // create an object that can be used in this scope only
-      Object o = l();
+      Object o = objectCreatorFun();
       // store the object in the vector v using move semantics;
       // the lifetime of the object is extended over this scope
       v.push_back(std::move(o));
@@ -303,7 +303,6 @@ TEST(objectPool, test_4)
     ASSERT_EQ(poolSize, iPool.getNumberOfObjectsCreated());
     ASSERT_EQ(false, iPool.checkObjectsOverflow());
     ASSERT_EQ(of, iPool.checkObjectsOverflow());
-    ASSERT_EQ(false, of);
 
     // reference to the value
     auto& vr = *(o.get());
@@ -341,7 +340,7 @@ TEST(objectPool, test_5)
 
   class CA
   {
-    int m_x {};
+    mutable int m_x {};
 
   public:
     // By default the attribute is set to initDefaultValue
@@ -360,7 +359,7 @@ TEST(objectPool, test_5)
       return m_x;
     }
 
-    void set_x(const int x) noexcept
+    void set_x(const int& x) const noexcept
     {
       m_x = x;
     }
@@ -394,7 +393,6 @@ TEST(objectPool, test_5)
     ASSERT_EQ(poolSize, caPool.getNumberOfObjectsCreated());
     ASSERT_EQ(false, caPool.checkObjectsOverflow());
     ASSERT_EQ(of1, caPool.checkObjectsOverflow());
-    ASSERT_EQ(false, of1);
 
     // let's try to get another object from the pool
     // since the pool is empty a new pool of size 1 is allocated
@@ -407,7 +405,6 @@ TEST(objectPool, test_5)
     // and we are in an overflow condition since the hard max objects limit is 1
     ASSERT_EQ(true, caPool.checkObjectsOverflow());
     ASSERT_EQ(of2, caPool.checkObjectsOverflow());
-    ASSERT_EQ(true, of2);
     
     // reference to the value of o1
     auto& vr1 = *(o1.get());
@@ -435,13 +432,13 @@ TEST(objectPool, test_5)
             << std::endl;
 }
 
-TEST(objectPool, test_6)
+TEST(objectPool, test_5A)
 {
-  const int initDefaultValue {7};
+  const int initDefaultValue {2};
 
   class CA
   {
-    int m_x {};
+    mutable int m_x {};
 
   public:
     // By default the attribute is set to initDefaultValue
@@ -455,15 +452,85 @@ TEST(objectPool, test_6)
     CA(const CA& rhs) = delete;
     CA& operator=(const CA& rhs) = delete;
 
-    int get_x () const noexcept
+//    int get_x () const noexcept
+//    {
+//      return m_x;
+//    }
+
+//    void set_x(const int& x) const noexcept
+//    {
+//      m_x = x;
+//    }
+  };  // class CA
+
+  // Let's create a pool of CA's objects
+  using ca_op = object_pool::objectPool<CA>;
+
+  const auto poolSize {1};
+  const auto hardMaxObjectsLimit {1};
+
+  // the pool has 1 object, and 1 as the hard max objects limit
+  ca_op caPool(poolSize,hardMaxObjectsLimit);
+
+  // check the intial conditions
+  ASSERT_EQ(poolSize, caPool.getFreeListSize());
+  ASSERT_EQ(poolSize, caPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(false, caPool.checkObjectsOverflow());
+
+  {
+    // let's try to get an object from the pool but use std::ignore instead of
+    // an object variable.
+    // In this case no object is returned and the object pool is not changed
+    bool of1 {};
+    std::tie(std::ignore, of1) = caPool.acquireObject();
+
+    // check the free list pool status: it must not have been changed
+    ASSERT_EQ(poolSize, caPool.getFreeListSize());  
+    ASSERT_EQ(poolSize, caPool.getNumberOfObjectsCreated());
+    ASSERT_EQ(false, caPool.checkObjectsOverflow());
+    ASSERT_EQ(of1, caPool.checkObjectsOverflow());
+  }
+
+  // Check the free list pool again
+  ASSERT_EQ(poolSize, caPool.getFreeListSize());  
+  ASSERT_EQ(poolSize, caPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(false, caPool.checkObjectsOverflow());
+
+  // pool destroyed here when aPool goes out of scope
+  std::clog << "Object pool being destroyed now... total objects in the pool: "
+            << caPool.getNumberOfObjectsCreated()
+            << std::endl;
+}
+
+TEST(objectPool, test_6)
+{
+  const int initDefaultValue {7};
+
+  class CA
+  {
+    mutable int m_x {};
+
+  public:
+    // By default the attribute is set to initDefaultValue
+    explicit CA() : m_x(initDefaultValue) {}
+
+    ~CA()
     {
-      return m_x;
+      std::clog << "CA dtor called - m_x set to " << m_x << std::endl;
     }
 
-    void set_x(const int x) noexcept
-    {
-      m_x = x;
-    }
+    CA(const CA& rhs) = delete;
+    CA& operator=(const CA& rhs) = delete;
+
+//    int get_x () const noexcept
+//    {
+//      return m_x;
+//    }
+
+//    void set_x(const int x) const noexcept
+//    {
+//      m_x = x;
+//    }
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -480,23 +547,26 @@ TEST(objectPool, test_6)
   ASSERT_EQ(poolSize, caPool.getNumberOfObjectsCreated());
   ASSERT_EQ(false, caPool.checkObjectsOverflow());
 
+  const int objectsToAcquire {10};
+
   {
     std::vector<ca_op::Object> v {};
 
-    // Acquire 10 objects from the pool and push back them in vector v
-    // Since the object pool has been created with 1 object, 9 more objects will
-    // be created
-    for (int i = 1; i <= 10; ++i)
+    // Acquire objectsToAcquire objects from the pool and push back them in vector v
+    // Since the object pool has been created with 1 object, objectsToAcquire-1
+    // more objects will be created
+    for (int i = 1; i <= objectsToAcquire; ++i)
     {
       auto [o1, of1] = caPool.acquireObject();
       v.push_back(o1);
     }
-  }  // Vector v goes out of scope and all 10 objects are restored back in the pool
+  }  // Vector v goes out of scope and all objectsToAcquire objects are restored
+     // back in the pool
 
   // The Objects have been restored in the pool
   // Check the free list pool is not empty now
-  ASSERT_EQ(10, caPool.getFreeListSize());  
-  ASSERT_EQ(10, caPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(objectsToAcquire, caPool.getFreeListSize());  
+  ASSERT_EQ(objectsToAcquire, caPool.getNumberOfObjectsCreated());
   ASSERT_EQ(false, caPool.checkObjectsOverflow());
 
   // pool destroyed here when aPool goes out of scope
@@ -511,7 +581,7 @@ TEST(objectPool, test_7)
 
   class CA
   {
-    int m_x {};
+    mutable int m_x {};
 
   public:
     // By default the attribute is set to initDefaultValue
@@ -525,12 +595,12 @@ TEST(objectPool, test_7)
     CA(const CA& rhs) = delete;
     CA& operator=(const CA& rhs) = delete;
 
-    int get_x () const noexcept
-    {
-      return m_x;
-    }
+//    int get_x () const noexcept
+//    {
+//      return m_x;
+//    }
 
-    void set_x(const int x) noexcept
+    void set_x(const int x) const noexcept
     {
       m_x = x;
     }
@@ -597,38 +667,38 @@ TEST (objectPoolWithCreator, test_1)
       display_object();
     }
 
-    explicit
-    A(const std::string& s) noexcept
-    :
-    _s(s)
-    {
-      std::cout << "constructor-1 A(s): ";
-      display_object();
-    }
+//    explicit
+//    A(const std::string& s) noexcept
+//    :
+//    _s(s)
+//    {
+//      std::cout << "constructor-1 A(s): ";
+//      display_object();
+//    }
 
-    explicit
-    A(const std::string& s,
-      const int& x) noexcept
-    :
-    _s(s),
-    _x(x)
-    {
-      std::cout << "constructor-1 A(x): ";
-      display_object();
-    }
+//    explicit
+//    A(const std::string& s,
+//      const int& x) noexcept
+//    :
+//    _s(s),
+//    _x(x)
+//    {
+//      std::cout << "constructor-1 A(x): ";
+//      display_object();
+//    }
 
-    explicit
-    A(const std::string& s,
-      const int& x,
-      const int& y) noexcept
-    :
-    _s(s),
-    _x(x),
-    _y(y)
-    {
-      std::cout << "constructor-2 A(x, y): ";
-      display_object();
-    }
+//    explicit
+//    A(const std::string& s,
+//      const int& x,
+//      const int& y) noexcept
+//    :
+//    _s(s),
+//    _x(x),
+//    _y(y)
+//    {
+//      std::cout << "constructor-2 A(x, y): ";
+//      display_object();
+//    }
 
     explicit
     A(const std::string& s,
@@ -662,22 +732,22 @@ TEST (objectPoolWithCreator, test_1)
       return _z;
     }
 
-    void set_s(const std::string& s) const noexcept
-    {
-      _s = s;
-    }
+//    void set_s(const std::string& s) const noexcept
+//    {
+//      _s = s;
+//    }
     void set_x(const int& x) const noexcept
     {
       _x = x;
     }
-    void set_y(const int& y) const noexcept
-    {
-      _y = y;
-    }
-    void set_z(const int& z) const noexcept
-    {
-      _z = z;
-    }
+//    void set_y(const int& y) const noexcept
+//    {
+//      _y = y;
+//    }
+//    void set_z(const int& z) const noexcept
+//    {
+//      _z = z;
+//    }
 
     void display_object (const std::string& prompt = "") const noexcept
     {
