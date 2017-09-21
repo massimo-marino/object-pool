@@ -58,6 +58,11 @@ $ make
 
 #### Run Unit Tests
 
+Unit tests are implemented with `googletest`.
+
+Install `googletest` to compile and run them.
+
+
 ```bash
 $ cd src/unitTests
 $ ./unitTests
