@@ -134,7 +134,7 @@ public:
   using Object = std::shared_ptr<T>;
 
   // Reserve an object for use
-  auto acquireObject() const noexcept(false)
+  auto acquireObject() const noexcept(false) -> std::tuple<Object, bool>
   {
     bool isObjectOverflow {};
 
@@ -179,26 +179,33 @@ public:
  private:
   mutable size_t m_objectsCreated {};
 
-  // the ctor registered at object pool creation; it's nullptr if not registered
+  // the lambda that invokes a non-default ctor registered at object pool
+  // creation; it's nullptr if not registered
   object_creator::object_creator_fun<T> m_f {};
 
   // m_FreeList stores the objects that are not currently in use by clients
   mutable std::queue<std::unique_ptr<T>> m_FreeList {};
 
   // Allocates m_poolSize new objects and adds them to m_FreeList
-  auto allocatePool() const noexcept(false)
+  auto allocatePool() const noexcept(false) -> std::tuple<size_t, size_t, bool>
   {
     // generate a lambda that will invoke the right ctor
     std::function<std::unique_ptr<T>()> lambdaCtor {};
     if (m_f)
     {
       // this lambda invokes the (non-default) ctor registered at object pool creation
-      lambdaCtor = [this]() { return m_f(); };
+      lambdaCtor = [this]() -> std::unique_ptr<T>
+                   {
+                     return m_f();
+                   };
     }
     else
     {
       // this lambda invokes the default ctor
-      lambdaCtor = []() { return std::make_unique<T>(); };
+      lambdaCtor = []() -> std::unique_ptr<T>
+                   {
+                     return std::make_unique<T>();
+                   };
     }
 
     for (size_t i = 0; i < m_poolSize; ++i)

@@ -70,19 +70,6 @@ TEST (objectCreator, test_1)
       return _z;
     }
 
-//    void set_x(const int& x) const noexcept
-//    {
-//      _x = x;
-//    }
-//    void set_y(const int& y) const noexcept
-//    {
-//      _y = y;
-//    }
-//    void set_z(const int& z) const noexcept
-//    {
-//      _z = z;
-//    }
-
     void display_object (const std::string& prompt = "") const noexcept
     {
       std::cout << prompt
@@ -143,14 +130,12 @@ TEST (objectCreator, test_1)
   ASSERT_EQ(o4.get()->get_y(), 22);
   ASSERT_EQ(o4.get()->get_z(), 33);
 
-//  o0.get()->display_object("o0: ");
-//  o1.get()->display_object("o1: ");
-//  o2.get()->display_object("o2: ");
-//  o3.get()->display_object("o3: ");
-//  o4.get()->display_object("o4: ");
-
   {
-    objectCreatorFun = object_creator::create_object_creator_fun<A, const int, const int, const int>(99, 88, 77);
+    objectCreatorFun = object_creator::create_object_creator_fun<A,
+                                                                 const int,
+                                                                 const int,
+                                                                 const int>
+                                                               (99, 88, 77);
 
     std::vector<Object> v {};
     for (int i = 1; i <= 5; ++i)
@@ -451,16 +436,6 @@ TEST(objectPool, test_5A)
 
     CA(const CA& rhs) = delete;
     CA& operator=(const CA& rhs) = delete;
-
-//    int get_x () const noexcept
-//    {
-//      return m_x;
-//    }
-
-//    void set_x(const int& x) const noexcept
-//    {
-//      m_x = x;
-//    }
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -480,7 +455,9 @@ TEST(objectPool, test_5A)
   {
     // let's try to get an object from the pool but use std::ignore instead of
     // an object variable.
-    // In this case no object is returned and the object pool is not changed
+    // In this case no object is returned by acquireObject(), though an object
+    // is removed from the free list pool and immediately restored back by the
+    // custom dtor
     bool of1 {};
     std::tie(std::ignore, of1) = caPool.acquireObject();
 
@@ -521,16 +498,6 @@ TEST(objectPool, test_6)
 
     CA(const CA& rhs) = delete;
     CA& operator=(const CA& rhs) = delete;
-
-//    int get_x () const noexcept
-//    {
-//      return m_x;
-//    }
-
-//    void set_x(const int x) const noexcept
-//    {
-//      m_x = x;
-//    }
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -594,11 +561,6 @@ TEST(objectPool, test_7)
 
     CA(const CA& rhs) = delete;
     CA& operator=(const CA& rhs) = delete;
-
-//    int get_x () const noexcept
-//    {
-//      return m_x;
-//    }
 
     void set_x(const int x) const noexcept
     {
@@ -667,39 +629,6 @@ TEST (objectPoolWithCreator, test_1)
       display_object();
     }
 
-//    explicit
-//    A(const std::string& s) noexcept
-//    :
-//    _s(s)
-//    {
-//      std::cout << "constructor-1 A(s): ";
-//      display_object();
-//    }
-
-//    explicit
-//    A(const std::string& s,
-//      const int& x) noexcept
-//    :
-//    _s(s),
-//    _x(x)
-//    {
-//      std::cout << "constructor-1 A(x): ";
-//      display_object();
-//    }
-
-//    explicit
-//    A(const std::string& s,
-//      const int& x,
-//      const int& y) noexcept
-//    :
-//    _s(s),
-//    _x(x),
-//    _y(y)
-//    {
-//      std::cout << "constructor-2 A(x, y): ";
-//      display_object();
-//    }
-
     explicit
     A(const std::string& s,
       const int& x,
@@ -711,7 +640,7 @@ TEST (objectPoolWithCreator, test_1)
     _y(y),
     _z(z)
     {
-      std::cout << "constructor-3 A(x, y, z): ";
+      std::cout << "constructor-1 A(s, x, y, z): ";
       display_object();
     }
 
@@ -732,22 +661,10 @@ TEST (objectPoolWithCreator, test_1)
       return _z;
     }
 
-//    void set_s(const std::string& s) const noexcept
-//    {
-//      _s = s;
-//    }
     void set_x(const int& x) const noexcept
     {
       _x = x;
     }
-//    void set_y(const int& y) const noexcept
-//    {
-//      _y = y;
-//    }
-//    void set_z(const int& z) const noexcept
-//    {
-//      _z = z;
-//    }
 
     void display_object (const std::string& prompt = "") const noexcept
     {
@@ -797,8 +714,8 @@ TEST (objectPoolWithCreator, test_1)
   const auto hardMaxObjectsLimit {10};
 
   // the pool has 2 object, and 10 as the hard max objects limit
-  // the ctor registered is l()
-  a_op aPool(l, poolSize, hardMaxObjectsLimit);
+  // the lambda that invokes the ctor registered is objectCreatorFun()
+  a_op aPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
 
   // check the initial conditions
   ASSERT_EQ(poolSize, aPool.getFreeListSize());
@@ -816,7 +733,164 @@ TEST (objectPoolWithCreator, test_1)
   
   auto& vr1 = *o1.get();
 
-  // check the object's attribute values set by the non-default ctor invoked by l()
+  // check the object's attribute values set by the non-default ctor invoked by
+  // objectCreatorFun()
+  ASSERT_EQ(S, vr1.get_s());
+  ASSERT_EQ(X, vr1.get_x());
+  ASSERT_EQ(Y, vr1.get_y());
+  ASSERT_EQ(Z, vr1.get_z());
+
+  const int objectsToAcquire {50};
+  {
+    // create a vector of objects
+    std::vector<decltype(o1)> v {};
+    {
+      // acquire objectsToAcquire objects from the pool; since the object pool is
+      // empty then objectsToAcquire more objects are created
+      for (int i = 1; i <= objectsToAcquire; ++i)
+      {
+        auto [o, f] = aPool.acquireObject();
+        // Just change the attribute value to the current index value
+        o.get()->set_x(i);
+        v.push_back(o);
+      }
+
+      // check the current conditions
+      ASSERT_EQ(objectsToAcquire, v.size());
+      ASSERT_EQ(0, aPool.getFreeListSize());
+      ASSERT_EQ(objectsToAcquire + poolSize, aPool.getNumberOfObjectsCreated());
+      ASSERT_EQ(true, aPool.checkObjectsOverflow());
+    }
+  }  // the vector is freed, then all objects are restored in the object pool
+
+  // check the current conditions
+  ASSERT_EQ(objectsToAcquire, aPool.getFreeListSize());
+  ASSERT_EQ(objectsToAcquire + poolSize, aPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(true, aPool.checkObjectsOverflow());
+
+  // pool destroyed here when aPool goes out of scope
+  std::clog << "Object pool being destroyed now... total objects in the pool: "
+            << aPool.getNumberOfObjectsCreated()
+            << std::endl;
+}
+
+TEST (objectPoolWithCreator, test_2)
+{
+  using aCtorTuple = std::tuple<std::string, int, int, int>;
+  
+  class A
+  {
+    mutable std::string _s{};
+    mutable int _x{};
+    mutable int _y{};
+    mutable int _z{};
+
+   public:
+    explicit
+    A() noexcept
+    {
+      std::cout << "default constructor A(): ";
+      display_object();
+    }
+
+    explicit
+    A(const aCtorTuple& t) noexcept
+    :
+    _s(std::get<0>(t)),
+    _x(std::get<1>(t)),
+    _y(std::get<2>(t)),
+    _z(std::get<3>(t))
+    {
+      std::cout << "constructor-1 A(s, x, y, z): ";
+      display_object();
+    }
+
+    std::string get_s() const noexcept
+    {
+      return _s;
+    }
+    int get_x() const noexcept
+    {
+      return _x;
+    }
+    int get_y() const noexcept
+    {
+      return _y;
+    }
+    int get_z() const noexcept
+    {
+      return _z;
+    }
+
+    void set_x(const int& x) const noexcept
+    {
+      _x = x;
+    }
+
+    void display_object (const std::string& prompt = "") const noexcept
+    {
+      std::cout << prompt
+                << "(s, x, y, z): ("
+                << get_s()
+                << ", "
+                << get_x()
+                << ", "
+                << get_y()
+                << ", "
+                << get_z()
+                << ")"
+                << std::endl;
+    }
+
+    A(const A& rhs) = delete;
+    A& operator=(const A& rhs) = delete;
+
+    ~A()
+    {
+      std::cout << "Destroyed object: ";
+      display_object();
+    }
+  };  // class A
+
+  // Pack the values for the ctor into a tuple and pass it to the ctor
+  auto S {"Object Name"};
+  auto X {12};
+  const auto Y {34};
+  auto Z {56};
+  aCtorTuple t {S, X, Y, Z};
+  object_creator::object_creator_fun<A> objectCreatorFun {};
+
+  objectCreatorFun = object_creator::create_object_creator_fun<A, const decltype(t)>
+                            (std::forward<const decltype(t)>(t));
+
+  // Let's create a pool of A's objects
+  using a_op = object_pool::objectPool<A>;
+
+  const auto poolSize {2};
+  const auto hardMaxObjectsLimit {10};
+
+  // the pool has 2 object, and 10 as the hard max objects limit
+  // the lambda that invokes the ctor registered is objectCreatorFun()
+  a_op aPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+
+  // check the initial conditions
+  ASSERT_EQ(poolSize, aPool.getFreeListSize());
+  ASSERT_EQ(poolSize, aPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(false, aPool.checkObjectsOverflow());
+
+  // get 2 objects from the pool
+  auto [o1, of1] = aPool.acquireObject();
+  auto [o2, of2] = aPool.acquireObject();
+
+  // check pool conditions
+  ASSERT_EQ(poolSize - 2, aPool.getFreeListSize());
+  ASSERT_EQ(poolSize, aPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(false, aPool.checkObjectsOverflow());
+  
+  auto& vr1 = *o1.get();
+
+  // check the object's attribute values set by the non-default ctor invoked by
+  // objectCreatorFun()
   ASSERT_EQ(S, vr1.get_s());
   ASSERT_EQ(X, vr1.get_x());
   ASSERT_EQ(Y, vr1.get_y());
