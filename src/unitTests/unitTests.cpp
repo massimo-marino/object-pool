@@ -801,7 +801,7 @@ TEST (objectPoolWithCreator, test_2)
     _y(std::get<2>(t)),
     _z(std::get<3>(t))
     {
-      std::cout << "constructor-1 A(s, x, y, z): ";
+      std::cout << "constructor-1 A({s, x, y, z}): ";
       display_object();
     }
 
