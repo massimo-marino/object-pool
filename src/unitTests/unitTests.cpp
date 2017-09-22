@@ -696,16 +696,16 @@ TEST (objectPoolWithCreator, test_1)
   const auto Y {56};
   auto Z {78};
 
-  object_creator::object_creator_fun<A> l {};
-  l = object_creator::create_object_creator_fun<A,
-                                                const decltype(S),
-                                                const decltype(X),
-                                                const decltype(Y),
-                                                const decltype(Z)>
-          (std::forward<const decltype(S)>(S),
-           std::forward<const decltype(X)>(X),
-           std::forward<const decltype(Y)>(Y),
-           std::forward<const decltype(Z)>(Z));
+  object_creator::object_creator_fun<A> objectCreatorFun {};
+  objectCreatorFun = object_creator::create_object_creator_fun<A,
+                                                               const decltype(S),
+                                                               const decltype(X),
+                                                               const decltype(Y),
+                                                               const decltype(Z)>
+                          (std::forward<const decltype(S)>(S),
+                           std::forward<const decltype(X)>(X),
+                           std::forward<const decltype(Y)>(Y),
+                           std::forward<const decltype(Z)>(Z));
 
   // Let's create a pool of A's objects
   using a_op = object_pool::objectPool<A>;
