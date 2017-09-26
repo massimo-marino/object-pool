@@ -5,6 +5,7 @@
  */
 
 #include "../objectPool.h"
+#include <future>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -886,7 +887,7 @@ TEST (objectPoolWithCreator, test_2)
   ASSERT_EQ(poolSize - 2, aPool.getFreeListSize());
   ASSERT_EQ(poolSize, aPool.getNumberOfObjectsCreated());
   ASSERT_EQ(false, aPool.checkObjectsOverflow());
-  
+
   auto& vr1 = *o1.get();
 
   // check the object's attribute values set by the non-default ctor invoked by
@@ -927,6 +928,249 @@ TEST (objectPoolWithCreator, test_2)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << aPool.getNumberOfObjectsCreated()
+            << std::endl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//// Multithreaded test
+
+using bCtorTuple = std::tuple<std::string, int>;
+
+class B
+{
+  mutable std::string _s{};
+  mutable int _k{};
+  mutable int _reuseCounter{};
+
+ public:
+  explicit
+  B() noexcept
+  {
+    std::cout << "default constructor B(): ";
+    display_object();
+  }
+
+  explicit
+  B(const bCtorTuple& t) noexcept
+  :
+  _s(std::get<0>(t)),
+  _k(std::get<1>(t))
+  {
+    std::cout << "constructor-1 B({s, k, rc}): ";
+    display_object();
+  }
+
+  B(const B& rhs) = delete;
+  B& operator=(const B& rhs) = delete;
+
+  ~B()
+  {
+    std::cout << "Destroyed object: ";
+    display_object();
+  }
+
+  std::string get_s() const noexcept
+  {
+    return _s;
+  }
+  int get_k() const noexcept
+  {
+    return _k;
+  }
+  int get_reuseCounter() const noexcept
+  {
+    return _reuseCounter;
+  }
+
+  void append_s(const std::string& s) const noexcept
+  {
+    _s = _s + " " + s;
+  }
+  void set_s(const std::string& s) const noexcept
+  {
+    _s = s;
+  }
+  void set_k(const int& k) const noexcept
+  {
+    _k = k;
+  }
+  void updateReuseCounter() const noexcept
+  {
+    ++_reuseCounter;
+  }
+
+  void display_object (const std::string& prompt = "") const noexcept
+  {
+    std::cout << prompt
+              << "(s, k, rc): ("
+              << get_s()
+              << ", "
+              << get_k()
+              << ", "
+              << get_reuseCounter()
+              << ")"
+              << std::endl;
+  }
+};  // class B
+
+static void allow (const int64_t& d = 0) noexcept
+{
+  std::this_thread::yield();
+  if ( 0 == d)
+  {
+    return;
+  }
+  std::this_thread::sleep_for(std::chrono::nanoseconds(d));
+}
+
+// Let's create a pool of B's objects
+using b_op = object_pool::objectPool<B>;
+
+static void threadBody(b_op& aPool,
+                      const std::string& func,
+                      const int K,
+                      const int64_t& d)
+{
+   std::clog << "[" << func << "] "
+            << "STARTED"
+            << std::endl;
+
+  // get 1 object from the pool
+  auto [o1, of1] = aPool.acquireObject();
+  auto& vr1 = *o1.get();
+  vr1.append_s(func);
+  vr1.set_k(K);
+  vr1.updateReuseCounter();
+
+  const int objectsToAcquire {50};
+  for (unsigned int i = 1; i <= 10; ++i)
+  {
+    // create a vector of objects
+    std::vector<decltype(o1)> v {};
+    {
+      // acquire objectsToAcquire objects from the pool;
+      for (int i = 1; i <= objectsToAcquire; ++i)
+      {
+        auto [o, f] = aPool.acquireObject();
+        // append the function name to the string attribute value
+        o.get()->append_s(func);
+        o.get()->set_k(K);
+        o.get()->updateReuseCounter();
+        v.push_back(o);
+        
+        allow(d);
+      }
+
+      // check the current conditions
+      ASSERT_EQ(objectsToAcquire, v.size());
+      ASSERT_EQ(false, aPool.checkObjectsOverflow());
+    }
+  }  // the vector is freed, then all objects are restored in the object pool
+
+  // we cannot say anything about the size of the free list here, for sure we
+  // can say something about the number of objects created
+  ASSERT_TRUE(aPool.getNumberOfObjectsCreated() >= (objectsToAcquire + 2));
+
+  std::clog << "[" << func << "] "
+            << "TERMINATED"
+            << std::endl; 
+}  // threadBody
+
+static void clientThread_1 (b_op& aPool)
+{
+  threadBody(aPool, __func__, 1, 1'700'000);
+}  // clientThread_1
+
+static void clientThread_2 (b_op& aPool)
+{
+  threadBody(aPool, __func__, 2, 3'700'000);
+}  //clientThread_2
+
+static void clientThread_3 (b_op& aPool)
+{
+  threadBody(aPool, __func__, 3, 5'700'000);
+}  //clientThread_3
+
+static void clientThread_4 (b_op& aPool)
+{
+  threadBody(aPool, __func__, 4, 7'700'000);
+}  //clientThread_4
+
+static void clientThread_5 (b_op& aPool)
+{
+  threadBody(aPool, __func__, 5, 9'700'000);
+}  //clientThread_5
+
+TEST (objectPoolWithCreator, multiThreadedTest)
+{
+  // Pack the values for the ctor into a tuple and pass it to the ctor
+  auto S {"-init-"};
+  auto K {-1};
+  bCtorTuple t {S, K};
+  object_creator::object_creator_fun<B> objectCreatorFun {};
+
+  objectCreatorFun = object_creator::create_object_creator_fun<B, const decltype(t)>
+                            (std::forward<const decltype(t)>(t));
+
+  const auto poolSize {2};
+  const auto hardMaxObjectsLimit {1'000};
+
+  // the pool has 2 object, and 1'000 as the hard max objects limit
+  // the lambda that invokes the ctor registered is objectCreatorFun()
+  b_op bPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+
+  // check the initial conditions
+  ASSERT_EQ(poolSize, bPool.getFreeListSize());
+  ASSERT_EQ(poolSize, bPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(false, bPool.checkObjectsOverflow());
+
+////////////////////////////////////////////////////////////////////////////////
+//// start the threads
+
+  // tasks launched asynchronously
+  std::future<void> ct1 = std::async(std::launch::async,
+                                     clientThread_1,
+                                     std::ref(bPool));
+  std::future<void> ct2 = std::async(std::launch::async,
+                                     clientThread_2,
+                                     std::ref(bPool));
+  std::future<void> ct3 = std::async(std::launch::async,
+                                     clientThread_3,
+                                     std::ref(bPool));
+  std::future<void> ct4 = std::async(std::launch::async,
+                                     clientThread_4,
+                                     std::ref(bPool));
+  std::future<void> ct5 = std::async(std::launch::async,
+                                     clientThread_5,
+                                     std::ref(bPool));
+
+  // wait for all threads to be finished and process any exception
+  try
+  {
+    ct1.get();
+    ct2.get();
+    ct3.get();
+    ct4.get();
+    ct5.get();
+  }
+  catch( const std::exception& e )
+  {
+    std::clog << "EXCEPTION: "
+              << e.what()
+              << std::endl;
+  }
+////////////////////////////////////////////////////////////////////////////////
+
+  // check the current conditions
+  std::clog << "Objects in the free list after the threads' termination: "
+            << bPool.getFreeListSize()
+            << std::endl;
+  ASSERT_TRUE(bPool.getNumberOfObjectsCreated() >= 102);
+  ASSERT_EQ(false, bPool.checkObjectsOverflow());
+
+  // pool destroyed here when aPool goes out of scope
+  std::clog << "Object pool being destroyed now... total objects in the pool: "
+            << bPool.getNumberOfObjectsCreated()
             << std::endl;
 }
 

@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <queue>
 #include <stdexcept>
+#include <mutex>
 #include <memory>
 #include <tuple>
 #include <utility>
@@ -74,6 +75,18 @@ class objectPoolBase
   static const int64_t m_kdefaultHardLimitMaxObjects;
   size_t m_poolSize;
   size_t m_HardLimitMaxObjects;
+  mutable size_t m_objectsCreated {};
+  mutable std::mutex m_mx {};
+
+  size_t _getNumberOfObjectsCreated() const noexcept
+  {
+    return m_objectsCreated;
+  }
+
+  bool _checkObjectsOverflow () const noexcept
+  {
+    return (_getNumberOfObjectsCreated() > m_HardLimitMaxObjects);
+  }
 
  public:
   // delegating ctor
@@ -84,6 +97,20 @@ class objectPoolBase
   // Prevent assignment and pass-by-value
   objectPoolBase(const objectPoolBase& src) = delete;
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
+
+  size_t getNumberOfObjectsCreated() const noexcept
+  {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
+    return m_objectsCreated;
+  }
+
+  bool checkObjectsOverflow () const noexcept
+  {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
+    return (_getNumberOfObjectsCreated() > m_HardLimitMaxObjects);
+  }
 };  // objectPoolBase
 
 template <typename T>
@@ -136,6 +163,8 @@ public:
   // Reserve an object for use
   auto acquireObject() const noexcept(false) -> std::tuple<Object, bool>
   {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
     bool isObjectOverflow {};
 
     if ( m_FreeList.empty() )
@@ -151,6 +180,8 @@ public:
     Object smartObject(obj.release(),
             [this](T* t)
             {
+              std::lock_guard<std::mutex> lg(m_mx);
+
               // The custom deleter doesn't actually deallocate the memory,
               // but simply puts the object back on the free list
               m_FreeList.push(std::unique_ptr<T>(t));
@@ -163,22 +194,12 @@ public:
 
   size_t getFreeListSize() const noexcept
   {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
     return m_FreeList.size();
   }
 
-  size_t getNumberOfObjectsCreated() const noexcept
-  {
-    return m_objectsCreated;
-  }
-
-  bool checkObjectsOverflow () const noexcept
-  {
-    return (getNumberOfObjectsCreated() > m_HardLimitMaxObjects);
-  }
-
  private:
-  mutable size_t m_objectsCreated {};
-
   // the lambda that invokes a non-default ctor registered at object pool
   // creation; it's nullptr if not registered
   object_creator::object_creator_fun<T> m_f {};
@@ -214,9 +235,14 @@ public:
       ++m_objectsCreated;
     }
 
-    return std::make_tuple(getFreeListSize(),
-                           getNumberOfObjectsCreated(),
-                           checkObjectsOverflow() );
+    return std::make_tuple(_getFreeListSize(),
+                           _getNumberOfObjectsCreated(),
+                           _checkObjectsOverflow() );
+  }
+
+  size_t _getFreeListSize() const noexcept
+  {
+    return m_FreeList.size();
   }
 };  // class ObjectPool
 }  // namespace object_pool
