@@ -193,6 +193,10 @@ public:
   objectPoolBase(poolSize, highWaterMark),
   m_f(f)
   {
+    // when a non-default ctor is provided the default object must be ctor-ed with
+    // this ctor
+    m_defaultResetObject = *(m_f().get());
+    
     // Create poolSize objects to start
     allocatePool();
   }
@@ -248,7 +252,7 @@ public:
  private:
 
   // object used to reset pool's objects when returned to the pool
-  const T m_defaultObject{};
+  mutable T m_defaultResetObject{};
 
   // m_FreeList stores the objects that are not currently in use by clients
   mutable std::queue<std::unique_ptr<T>> m_FreeList {};
@@ -300,7 +304,7 @@ public:
 
   void resetObject(T& object) const noexcept
   {
-    object = m_defaultObject;
+    object = m_defaultResetObject;
   }
 };  // class ObjectPool
 }  // namespace object_pool
