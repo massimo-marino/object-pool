@@ -1029,7 +1029,7 @@ using b_op = object_pool::objectPool<B>;
 static void threadBody(b_op& aPool,
                       const std::string& func,
                       const int K,
-                      const int64_t& d)
+                      const int64_t& d) noexcept
 {
    std::clog << "[" << func << "] "
             << "STARTED"
