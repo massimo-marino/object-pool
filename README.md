@@ -1,5 +1,5 @@
 # object-pool
-C++14/C++17 implementation of an object pool
+C++14/C++17 implementation of an object pool pattern
 
 #### Description
 
@@ -31,9 +31,17 @@ bottleneck.*
 
 **--- cit OFF**
 
- It is also possible to create an object pool providing a non-default ctor for
- the objects that is registered and used at any new allocation when the pool
- is empty.
+
+It is also possible to create an object pool providing a non-default ctor for
+the objects that is registered and used at any new allocation when the pool
+is empty
+
+
+Objects returned to the pool are reset by default
+
+
+See: https://en.wikipedia.org/wiki/Object_pool_pattern
+
 
 See the unit tests for examples of use.
 

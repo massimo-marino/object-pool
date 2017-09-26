@@ -48,7 +48,7 @@ template <typename T>
 using object_creator_fun = std::function<std::unique_ptr<T>(void)>;
 
 template <typename T, typename... Args>
-auto create_object_creator_fun(Args&&... args) -> object_creator_fun<T>
+auto create_object_creator_fun(Args&&... args) noexcept -> object_creator_fun<T>
 {
   // return a function object for creating T's objects with the given arguments
   // to be passed to its constructor

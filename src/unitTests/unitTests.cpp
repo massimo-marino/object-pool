@@ -9,6 +9,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+// BEGIN: ignore the warnings listed below when compiled with clang from here
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+
 using namespace ::testing;
 ////////////////////////////////////////////////////////////////////////////////
 // Tests
@@ -255,8 +260,8 @@ TEST(objectPool, test_3)
   using CAop = object_pool::objectPool<CA>;
 
   EXPECT_NO_THROW(CAop CAPool(poolSize));
-  ASSERT_EQ(poolSize, ctorCalls);
-  ASSERT_EQ(poolSize, dtorCalls);
+  ASSERT_EQ(poolSize + 1, ctorCalls);
+  ASSERT_EQ(poolSize + 1, dtorCalls);
 }
 
 TEST(objectPool, test_4)
@@ -337,8 +342,8 @@ TEST(objectPool, test_5)
       std::clog << "CA dtor called - m_x set to " << m_x << std::endl;
     }
 
-    CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = delete;
+    CA(const CA& rhs) = default;
+    CA& operator=(const CA& rhs) = default;
 
     int get_x () const noexcept
     {
@@ -436,7 +441,7 @@ TEST(objectPool, test_5A)
     }
 
     CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = delete;
+    CA& operator=(const CA& rhs) = default;
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -498,7 +503,7 @@ TEST(objectPool, test_6)
     }
 
     CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = delete;
+    CA& operator=(const CA& rhs) = default;
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -561,7 +566,7 @@ TEST(objectPool, test_7)
     }
 
     CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = delete;
+    CA& operator=(const CA& rhs) = default;
 
     void set_x(const int x) const noexcept
     {
@@ -683,7 +688,7 @@ TEST (objectPoolWithCreator, test_1)
     }
 
     A(const A& rhs) = delete;
-    A& operator=(const A& rhs) = delete;
+    A& operator=(const A& rhs) = default;
 
     ~A()
     {
@@ -844,7 +849,7 @@ TEST (objectPoolWithCreator, test_2)
     }
 
     A(const A& rhs) = delete;
-    A& operator=(const A& rhs) = delete;
+    A& operator=(const A& rhs) = default;
 
     ~A()
     {
@@ -961,7 +966,7 @@ class B
   }
 
   B(const B& rhs) = delete;
-  B& operator=(const B& rhs) = delete;
+  B& operator=(const B& rhs) = default;
 
   ~B()
   {
@@ -1043,7 +1048,7 @@ static void threadBody(b_op& aPool,
   vr1.updateReuseCounter();
 
   const int objectsToAcquire {50};
-  for (unsigned int i = 1; i <= 10; ++i)
+  for (unsigned int loops = 1; loops <= 10; ++loops)
   {
     // create a vector of objects
     std::vector<decltype(o1)> v {};
@@ -1101,7 +1106,7 @@ static void clientThread_5 (b_op& aPool)
   threadBody(aPool, __func__, 5, 9'700'000);
 }  //clientThread_5
 
-TEST (objectPoolWithCreator, multiThreadedTest)
+TEST (objectPoolWithCreator, multiThreadedTest_1)
 {
   // Pack the values for the ctor into a tuple and pass it to the ctor
   auto S {"-init-"};
@@ -1119,10 +1124,13 @@ TEST (objectPoolWithCreator, multiThreadedTest)
   // the lambda that invokes the ctor registered is objectCreatorFun()
   b_op bPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
 
+  // reset objects when returned to the pool (this is the default)
+
   // check the initial conditions
   ASSERT_EQ(poolSize, bPool.getFreeListSize());
   ASSERT_EQ(poolSize, bPool.getNumberOfObjectsCreated());
   ASSERT_EQ(false, bPool.checkObjectsOverflow());
+  ASSERT_EQ(true, bPool.getResetObjectsFlag());
 
 ////////////////////////////////////////////////////////////////////////////////
 //// start the threads
@@ -1173,6 +1181,86 @@ TEST (objectPoolWithCreator, multiThreadedTest)
             << bPool.getNumberOfObjectsCreated()
             << std::endl;
 }
+
+TEST (objectPoolWithCreator, multiThreadedTest_2)
+{
+  // Pack the values for the ctor into a tuple and pass it to the ctor
+  auto S {"-init-"};
+  auto K {-1};
+  bCtorTuple t {S, K};
+  object_creator::object_creator_fun<B> objectCreatorFun {};
+
+  objectCreatorFun = object_creator::create_object_creator_fun<B, const decltype(t)>
+                            (std::forward<const decltype(t)>(t));
+
+  const auto poolSize {2};
+  const auto hardMaxObjectsLimit {1'000};
+
+  // the pool has 2 object, and 1'000 as the hard max objects limit
+  // the lambda that invokes the ctor registered is objectCreatorFun()
+  b_op bPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+
+  // do NOT reset the objects when returned to the pool
+  bPool.doNotResetObjects();
+
+  // check the initial conditions
+  ASSERT_EQ(poolSize, bPool.getFreeListSize());
+  ASSERT_EQ(poolSize, bPool.getNumberOfObjectsCreated());
+  ASSERT_EQ(false, bPool.checkObjectsOverflow());
+  ASSERT_EQ(false, bPool.getResetObjectsFlag());
+
+////////////////////////////////////////////////////////////////////////////////
+//// start the threads
+
+  // tasks launched asynchronously
+  std::future<void> ct1 = std::async(std::launch::async,
+                                     clientThread_1,
+                                     std::ref(bPool));
+  std::future<void> ct2 = std::async(std::launch::async,
+                                     clientThread_2,
+                                     std::ref(bPool));
+  std::future<void> ct3 = std::async(std::launch::async,
+                                     clientThread_3,
+                                     std::ref(bPool));
+  std::future<void> ct4 = std::async(std::launch::async,
+                                     clientThread_4,
+                                     std::ref(bPool));
+  std::future<void> ct5 = std::async(std::launch::async,
+                                     clientThread_5,
+                                     std::ref(bPool));
+
+  // wait for all threads to be finished and process any exception
+  try
+  {
+    ct1.get();
+    ct2.get();
+    ct3.get();
+    ct4.get();
+    ct5.get();
+  }
+  catch( const std::exception& e )
+  {
+    std::clog << "EXCEPTION: "
+              << e.what()
+              << std::endl;
+  }
+////////////////////////////////////////////////////////////////////////////////
+
+  // check the current conditions
+  std::clog << "Objects in the free list after the threads' termination: "
+            << bPool.getFreeListSize()
+            << std::endl;
+  ASSERT_TRUE(bPool.getNumberOfObjectsCreated() >= 102);
+  ASSERT_EQ(false, bPool.checkObjectsOverflow());
+
+  // pool destroyed here when aPool goes out of scope
+  std::clog << "Object pool being destroyed now... total objects in the pool: "
+            << bPool.getNumberOfObjectsCreated()
+            << std::endl;
+}
+
+#pragma clang diagnostic pop
+// END: ignore the warnings when compiled with clang up to here
 
 //int main(int argc, char **argv) {
 //  ::testing::InitGoogleTest(&argc, argv);

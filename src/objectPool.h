@@ -66,17 +66,27 @@ namespace object_pool
 // It is also possible to create an object pool providing a non-default ctor for
 // the objects that is registered and used at any new allocation when the pool
 // is empty
+//
+// Objects returned to the pool are reset by default
+//
+// See: https://en.wikipedia.org/wiki/Object_pool_pattern
 ////////////////////////////////////////////////////////////////////////////////
 // Base class that does not depend on the class template
 class objectPoolBase
 {
  protected:
   static const int64_t m_kDefaultPoolSize;
-  static const int64_t m_kdefaultHardLimitMaxObjects;
+  static const int64_t m_kdefaultHighWaterMark;
   size_t m_poolSize;
-  size_t m_HardLimitMaxObjects;
+  // the max number of objects allowed in the pool
+  // this value is not enforced in this implementation: a client should check
+  // the tuple returned by the method acquireObject() and implement its strategy
+  // or change this implementation
+  size_t m_HighWaterMark;
   mutable size_t m_objectsCreated {};
   mutable std::mutex m_mx {};
+  // by default the objects are reset when restored in the pool
+  mutable bool m_doResetObjects {true};
 
   size_t _getNumberOfObjectsCreated() const noexcept
   {
@@ -85,16 +95,29 @@ class objectPoolBase
 
   bool _checkObjectsOverflow () const noexcept
   {
-    return (_getNumberOfObjectsCreated() > m_HardLimitMaxObjects);
+    return (_getNumberOfObjectsCreated() > m_HighWaterMark);
+  }
+
+  void _doResetObjects() const noexcept
+  {
+    m_doResetObjects = true;
+  }
+  void _doNotResetObjects() const noexcept
+  {
+    m_doResetObjects = false;
+  }
+  bool _getResetObjectsFlag() const noexcept
+  {
+    return m_doResetObjects;
   }
 
  public:
   // delegating ctor
   explicit objectPoolBase();
   explicit objectPoolBase(const int64_t poolSize,
-                          const int64_t hardLimitMaxObjects) noexcept(false);
+                          const int64_t highWaterMark) noexcept(false);
   ~objectPoolBase() = default;
-  // Prevent assignment and pass-by-value
+
   objectPoolBase(const objectPoolBase& src) = delete;
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
 
@@ -109,7 +132,26 @@ class objectPoolBase
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
-    return (_getNumberOfObjectsCreated() > m_HardLimitMaxObjects);
+    return (_getNumberOfObjectsCreated() > m_HighWaterMark);
+  }
+  
+  void doResetObjects() const noexcept
+  {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
+    m_doResetObjects = true;
+  }
+  void doNotResetObjects() const noexcept
+  {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
+    m_doResetObjects = false;
+  }
+  bool getResetObjectsFlag() const noexcept
+  {
+    std::lock_guard<std::mutex> mlg(m_mx);
+
+    return m_doResetObjects;
   }
 };  // objectPoolBase
 
@@ -123,23 +165,21 @@ public:
 
   ~objectPool() = default;
 
-  // Prevent assignment and pass-by-value
   objectPool(const objectPool& src) = delete;
-  objectPool& operator=(const objectPool& rhs) = delete;
 
   // Create an object pool with poolSize objects.
   // Whenever the object pool runs out of objects, poolSize more objects will be
   // added to the pool.
-  // The pool only grows: Objects are never removed from the pool (freed),
-  // until the pool is destroyed.
+  // The pool only grows: Objects are never removed from the pool (freed), until
+  // the pool is destroyed.
   //
-  // Throw invalid_argument if poolSize or hardLimitMaxObjects is <= 0 or if
-  // poolSize > hardLimitMaxObjects
+  // Throw invalid_argument if poolSize or highWaterMark is <= 0 or if
+  // poolSize > highWaterMark
   // Throw bad_alloc if allocation fails
   explicit objectPool(const int64_t poolSize,
-                      const int64_t hardLimitMaxObjects = m_kdefaultHardLimitMaxObjects) noexcept(false)
+                      const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
   :
-  objectPoolBase(poolSize, hardLimitMaxObjects)
+  objectPoolBase(poolSize, highWaterMark)
   {
     // Create poolSize objects to start
     allocatePool();
@@ -148,9 +188,9 @@ public:
   // this ctor is used when a non-default ctor for T is provided as an object_creator::object_creator_fun<T> f
   explicit objectPool(object_creator::object_creator_fun<T> f,
                       const int64_t poolSize,
-                      const int64_t hardLimitMaxObjects = m_kdefaultHardLimitMaxObjects) noexcept(false)
+                      const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
   :
-  objectPoolBase(poolSize, hardLimitMaxObjects),
+  objectPoolBase(poolSize, highWaterMark),
   m_f(f)
   {
     // Create poolSize objects to start
@@ -182,15 +222,21 @@ public:
             {
               std::lock_guard<std::mutex> lg(m_mx);
 
+              // when an object is returned to the pool it must be reset
+              // this is the default
+              if ( _getResetObjectsFlag() )
+              {
+                resetObject(*t);
+              }
               // The custom deleter doesn't actually deallocate the memory,
-              // but simply puts the object back on the free list
+              // but simply puts the reset object back on the free list
               m_FreeList.push(std::unique_ptr<T>(t));
             } );
 
     // Return the tuple {Object smartObject, bool isObjectOverflow}
     return std::make_tuple(smartObject,
                            isObjectOverflow );
-  }
+  }  // acquireObject
 
   size_t getFreeListSize() const noexcept
   {
@@ -200,12 +246,19 @@ public:
   }
 
  private:
+
+  // object used to reset pool's objects when returned to the pool
+  const T m_defaultObject{};
+
+  // m_FreeList stores the objects that are not currently in use by clients
+  mutable std::queue<std::unique_ptr<T>> m_FreeList {};
+
   // the lambda that invokes a non-default ctor registered at object pool
   // creation; it's nullptr if not registered
   object_creator::object_creator_fun<T> m_f {};
 
-  // m_FreeList stores the objects that are not currently in use by clients
-  mutable std::queue<std::unique_ptr<T>> m_FreeList {};
+  // needed because of the method resetObject()
+  objectPool& operator=(const objectPool& rhs) = default;
 
   // Allocates m_poolSize new objects and adds them to m_FreeList
   auto allocatePool() const noexcept(false) -> std::tuple<size_t, size_t, bool>
@@ -238,11 +291,16 @@ public:
     return std::make_tuple(_getFreeListSize(),
                            _getNumberOfObjectsCreated(),
                            _checkObjectsOverflow() );
-  }
+  }  // allocatePool
 
   size_t _getFreeListSize() const noexcept
   {
     return m_FreeList.size();
+  }
+
+  void resetObject(T& object) const noexcept
+  {
+    object = m_defaultObject;
   }
 };  // class ObjectPool
 }  // namespace object_pool

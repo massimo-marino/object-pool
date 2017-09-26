@@ -27,30 +27,30 @@
 namespace object_pool
 {
 const int64_t objectPoolBase::m_kDefaultPoolSize {10};
-const int64_t objectPoolBase::m_kdefaultHardLimitMaxObjects {1'000};
+const int64_t objectPoolBase::m_kdefaultHighWaterMark {1'000};
 
 objectPoolBase::objectPoolBase()
 :
-objectPoolBase(m_kDefaultPoolSize, m_kdefaultHardLimitMaxObjects)
+objectPoolBase(m_kDefaultPoolSize, m_kdefaultHighWaterMark)
 {}
 
 objectPoolBase::objectPoolBase(const int64_t poolSize,
-                               const int64_t hardLimitMaxObjects) noexcept(false)
+                               const int64_t highWaterMark) noexcept(false)
 :
 m_poolSize(static_cast<size_t>(poolSize)),
-m_HardLimitMaxObjects(static_cast<size_t>(hardLimitMaxObjects))
+m_HighWaterMark(static_cast<size_t>(highWaterMark))
 {
   if ( poolSize <= 0 )
   {
     throw std::invalid_argument("pool size must be positive");
   }
-  if ( hardLimitMaxObjects <= 0 )
+  if ( highWaterMark <= 0 )
   {
-    throw std::invalid_argument("hard limit max objects must be positive");
+    throw std::invalid_argument("high water mark must be positive");
   }
-  if ( poolSize > hardLimitMaxObjects )
+  if ( poolSize > highWaterMark )
   {
-    throw std::invalid_argument("hard limit max objects must be greater than pool size");
+    throw std::invalid_argument("high water mark must be greater than pool size");
   }
 }
 }  // namespace object_pool
