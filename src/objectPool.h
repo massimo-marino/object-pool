@@ -27,13 +27,8 @@
 #define COBJECTPOOL_H
 
 #include "objectCreator.h"
-#include <cstddef>
-#include <queue>
-#include <stdexcept>
 #include <mutex>
-#include <memory>
-#include <tuple>
-#include <utility>
+#include <queue>
 ////////////////////////////////////////////////////////////////////////////////
 namespace object_pool
 {
@@ -193,8 +188,8 @@ public:
   objectPoolBase(poolSize, highWaterMark),
   m_f(f)
   {
-    // when a non-default ctor is provided the default object must be ctor-ed with
-    // this ctor
+    // when a non-default ctor is provided the default object must be initialized
+    // with that ctor
     m_defaultResetObject = *(m_f().get());
     
     // Create poolSize objects to start

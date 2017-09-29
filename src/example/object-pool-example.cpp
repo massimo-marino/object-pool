@@ -22,14 +22,8 @@
  * 
  * Created on April 12, 2017, 8:17 PM
  */
-
 #include "objectPool.h"
-#include <cstdint>
 #include <iostream>
-#include <thread>
-#include <future>
-#include <exception>
-#include <algorithm>
 ////////////////////////////////////////////////////////////////////////////////
 auto main() -> int
 {

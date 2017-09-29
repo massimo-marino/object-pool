@@ -23,6 +23,7 @@
  * Created on April 12, 2017, 8:17 PM
  */
 #include "objectPool.h"
+#include <stdexcept>
 ////////////////////////////////////////////////////////////////////////////////
 namespace object_pool
 {
