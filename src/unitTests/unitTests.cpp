@@ -101,23 +101,23 @@ TEST (objectCreator, test_1)
 
   using Object = std::unique_ptr<A>;
   
-  object_creator::object_creator_fun<A> objectCreatorFun {};
+  object_creator::objectCreatorFun<A> objectCreatorFun {};
 
-  objectCreatorFun = object_creator::create_object_creator_fun<A>();
+  objectCreatorFun = object_creator::createObjectCreatorFun<A>();
   Object o0 = objectCreatorFun();
 
   {
-    objectCreatorFun = object_creator::create_object_creator_fun<A, const int>(123);
+    objectCreatorFun = object_creator::createObjectCreatorFun<A, const int>(123);
   }
   Object o1 = objectCreatorFun();
 
-  objectCreatorFun = object_creator::create_object_creator_fun<A,const int>(456);
+  objectCreatorFun = object_creator::createObjectCreatorFun<A,const int>(456);
   Object o2 = objectCreatorFun();
 
-  objectCreatorFun = object_creator::create_object_creator_fun<A,const int, const int>(11, 22);
+  objectCreatorFun = object_creator::createObjectCreatorFun<A,const int, const int>(11, 22);
   Object o3 = objectCreatorFun();
 
-  objectCreatorFun = object_creator::create_object_creator_fun<A,const int, const int, const int>(11, 22, 33);
+  objectCreatorFun = object_creator::createObjectCreatorFun<A,const int, const int, const int>(11, 22, 33);
   Object o4 = objectCreatorFun();
 
   ASSERT_EQ(o0.get()->get_x(), 0);
@@ -137,11 +137,11 @@ TEST (objectCreator, test_1)
   ASSERT_EQ(o4.get()->get_z(), 33);
 
   {
-    objectCreatorFun = object_creator::create_object_creator_fun<A,
+    objectCreatorFun = object_creator::createObjectCreatorFun<A,
                                                                  const int,
                                                                  const int,
                                                                  const int>
-                                                               (99, 88, 77);
+                                                                 (99, 88, 77);
 
     std::vector<Object> v {};
     for (int i = 1; i <= 5; ++i)
@@ -702,12 +702,12 @@ TEST (objectPoolWithCreator, test_1)
   const auto Y {56};
   auto Z {78};
 
-  object_creator::object_creator_fun<A> objectCreatorFun {};
-  objectCreatorFun = object_creator::create_object_creator_fun<A,
-                                                               const decltype(S),
-                                                               const decltype(X),
-                                                               const decltype(Y),
-                                                               const decltype(Z)>
+  object_creator::objectCreatorFun<A> objectCreatorFun {};
+  objectCreatorFun = object_creator::createObjectCreatorFun<A,
+                                                            const decltype(S),
+                                                            const decltype(X),
+                                                            const decltype(Y),
+                                                            const decltype(Z)>
                           (std::forward<const decltype(S)>(S),
                            std::forward<const decltype(X)>(X),
                            std::forward<const decltype(Y)>(Y),
@@ -864,9 +864,9 @@ TEST (objectPoolWithCreator, test_2)
   const auto Y {34};
   auto Z {56};
   aCtorTuple t {S, X, Y, Z};
-  object_creator::object_creator_fun<A> objectCreatorFun {};
+  object_creator::objectCreatorFun<A> objectCreatorFun {};
 
-  objectCreatorFun = object_creator::create_object_creator_fun<A, const decltype(t)>
+  objectCreatorFun = object_creator::createObjectCreatorFun<A, const decltype(t)>
                             (std::forward<const decltype(t)>(t));
 
   // Let's create a pool of A's objects
@@ -1112,9 +1112,9 @@ TEST (objectPoolWithCreator, multiThreadedTest_1)
   auto S {"-init-"};
   auto K {-1};
   bCtorTuple t {S, K};
-  object_creator::object_creator_fun<B> objectCreatorFun {};
+  object_creator::objectCreatorFun<B> objectCreatorFun {};
 
-  objectCreatorFun = object_creator::create_object_creator_fun<B, const decltype(t)>
+  objectCreatorFun = object_creator::createObjectCreatorFun<B, const decltype(t)>
                             (std::forward<const decltype(t)>(t));
 
   const auto poolSize {2};
@@ -1188,9 +1188,9 @@ TEST (objectPoolWithCreator, multiThreadedTest_2)
   auto S {"-init-"};
   auto K {-1};
   bCtorTuple t {S, K};
-  object_creator::object_creator_fun<B> objectCreatorFun {};
+  object_creator::objectCreatorFun<B> objectCreatorFun {};
 
-  objectCreatorFun = object_creator::create_object_creator_fun<B, const decltype(t)>
+  objectCreatorFun = object_creator::createObjectCreatorFun<B, const decltype(t)>
                             (std::forward<const decltype(t)>(t));
 
   const auto poolSize {2};

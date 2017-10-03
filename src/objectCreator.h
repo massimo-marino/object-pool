@@ -32,29 +32,23 @@ namespace object_creator
 {
 // create an object of type T and return a std::unique_ptr to it
 template <typename T, typename... Args>
-auto create_unique_ptr(Args&&... args) -> std::unique_ptr<T>
+auto createUniquePtr(Args&&... args) -> std::unique_ptr<T>
 {
   // since C++14
   return std::make_unique<T>(args...);
-
-  // before C++14:  
-  //std::unique_ptr<T> local_ptr(new T(args...));
-  //return local_ptr; // local_ptr will surrender ownership;
-                    // the compiler should optimize the return as if it was:
-                    // return std::move(local_ptr);
 }
 
 template <typename T>
-using object_creator_fun = std::function<std::unique_ptr<T>(void)>;
+using objectCreatorFun = std::function<std::unique_ptr<T>(void)>;
 
 template <typename T, typename... Args>
-auto create_object_creator_fun(Args&&... args) noexcept -> object_creator_fun<T>
+auto createObjectCreatorFun(Args&&... args) noexcept -> objectCreatorFun<T>
 {
   // return a function object for creating T's objects with the given arguments
   // to be passed to its constructor
   return [args...]()
          {
-           return create_unique_ptr<T>(std::forward<Args>(args)...);
+           return createUniquePtr<T>(std::forward<Args>(args)...);
          };
 }
 }  // namespace object_creator

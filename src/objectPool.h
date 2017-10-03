@@ -113,6 +113,8 @@ class objectPoolBase
                           const int64_t highWaterMark) noexcept(false);
   ~objectPoolBase() = default;
 
+  // we don't want these objects allocated on the heap
+  void* operator new(std::size_t) = delete;
   objectPoolBase(const objectPoolBase& src) = delete;
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
 
@@ -151,9 +153,14 @@ class objectPoolBase
 };  // objectPoolBase
 
 template <typename T>
-class objectPool : public objectPoolBase
+class objectPool final : public objectPoolBase
 {
-public:
+using objectPoolStatus = std::tuple<size_t, size_t, bool>;
+
+ public:
+  // we don't want these objects allocated on the heap
+  void* operator new(std::size_t) = delete;
+
   explicit objectPool() noexcept(false) :
   objectPool(m_kDefaultPoolSize)
   {}
@@ -181,7 +188,7 @@ public:
   }
 
   // this ctor is used when a non-default ctor for T is provided as an object_creator::object_creator_fun<T> f
-  explicit objectPool(object_creator::object_creator_fun<T> f,
+  explicit objectPool(object_creator::objectCreatorFun<T> f,
                       const int64_t poolSize,
                       const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
   :
@@ -254,13 +261,13 @@ public:
 
   // the lambda that invokes a non-default ctor registered at object pool
   // creation; it's nullptr if not registered
-  object_creator::object_creator_fun<T> m_f {};
+  object_creator::objectCreatorFun<T> m_f {};
 
   // needed because of the method resetObject()
   objectPool& operator=(const objectPool& rhs) = default;
 
   // Allocates m_poolSize new objects and adds them to m_FreeList
-  auto allocatePool() const noexcept(false) -> std::tuple<size_t, size_t, bool>
+  auto allocatePool() const noexcept(false) -> objectPoolStatus
   {
     // generate a lambda that will invoke the right ctor
     std::function<std::unique_ptr<T>()> lambdaCtor {};
