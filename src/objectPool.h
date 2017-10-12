@@ -26,7 +26,7 @@
 #ifndef COBJECTPOOL_H
 #define COBJECTPOOL_H
 
-#include "objectCreator.h"
+#include "objectFactory.h"
 #include <mutex>
 #include <queue>
 ////////////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,6 @@ class objectPoolBase
     return m_doResetObjects;
   }
 
- public:
   // delegating ctor
   explicit objectPoolBase();
   explicit objectPoolBase(const int64_t poolSize,
@@ -118,6 +117,7 @@ class objectPoolBase
   objectPoolBase(const objectPoolBase& src) = delete;
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
 
+ public:
   size_t getNumberOfObjectsCreated() const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
@@ -188,7 +188,7 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
   }
 
   // this ctor is used when a non-default ctor for T is provided as an object_creator::object_creator_fun<T> f
-  explicit objectPool(object_creator::objectCreatorFun<T> f,
+  explicit objectPool(object_factory::objectFactoryFun<T> f,
                       const int64_t poolSize,
                       const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
   :
@@ -261,7 +261,7 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
 
   // the lambda that invokes a non-default ctor registered at object pool
   // creation; it's nullptr if not registered
-  object_creator::objectCreatorFun<T> m_f {};
+  object_factory::objectFactoryFun<T> m_f {};
 
   // needed because of the method resetObject()
   objectPool& operator=(const objectPool& rhs) = default;

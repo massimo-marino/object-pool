@@ -101,24 +101,24 @@ TEST (objectCreator, test_1)
 
   using Object = std::unique_ptr<A>;
   
-  object_creator::objectCreatorFun<A> objectCreatorFun {};
+  object_factory::objectFactoryFun<A> objectFactoryFun {};
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<A>();
-  Object o0 = objectCreatorFun();
+  objectFactoryFun = object_factory::createObjectFactoryFun<A>();
+  Object o0 = objectFactoryFun();
 
   {
-    objectCreatorFun = object_creator::createObjectCreatorFun<A, const int>(123);
+    objectFactoryFun = object_factory::createObjectFactoryFun<A, const int>(123);
   }
-  Object o1 = objectCreatorFun();
+  Object o1 = objectFactoryFun();
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<A,const int>(456);
-  Object o2 = objectCreatorFun();
+  objectFactoryFun = object_factory::createObjectFactoryFun<A,const int>(456);
+  Object o2 = objectFactoryFun();
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<A,const int, const int>(11, 22);
-  Object o3 = objectCreatorFun();
+  objectFactoryFun = object_factory::createObjectFactoryFun<A,const int, const int>(11, 22);
+  Object o3 = objectFactoryFun();
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<A,const int, const int, const int>(11, 22, 33);
-  Object o4 = objectCreatorFun();
+  objectFactoryFun = object_factory::createObjectFactoryFun<A,const int, const int, const int>(11, 22, 33);
+  Object o4 = objectFactoryFun();
 
   ASSERT_EQ(o0.get()->get_x(), 0);
   ASSERT_EQ(o0.get()->get_y(), 0);
@@ -137,17 +137,17 @@ TEST (objectCreator, test_1)
   ASSERT_EQ(o4.get()->get_z(), 33);
 
   {
-    objectCreatorFun = object_creator::createObjectCreatorFun<A,
-                                                                 const int,
-                                                                 const int,
-                                                                 const int>
-                                                                 (99, 88, 77);
+    objectFactoryFun = object_factory::createObjectFactoryFun<A,
+                                                              const int,
+                                                              const int,
+                                                              const int>
+                                                              (99, 88, 77);
 
     std::vector<Object> v {};
     for (int i = 1; i <= 5; ++i)
     {
       // create an object that can be used in this scope only
-      Object o = objectCreatorFun();
+      Object o = objectFactoryFun();
       // store the object in the vector v using move semantics;
       // the lifetime of the object is extended over this scope
       v.push_back(std::move(o));
@@ -702,8 +702,8 @@ TEST (objectPoolWithCreator, test_1)
   const auto Y {56};
   auto Z {78};
 
-  object_creator::objectCreatorFun<A> objectCreatorFun {};
-  objectCreatorFun = object_creator::createObjectCreatorFun<A,
+  object_factory::objectFactoryFun<A> objectFactoryFun {};
+  objectFactoryFun = object_factory::createObjectFactoryFun<A,
                                                             const decltype(S),
                                                             const decltype(X),
                                                             const decltype(Y),
@@ -720,8 +720,8 @@ TEST (objectPoolWithCreator, test_1)
   const auto hardMaxObjectsLimit {10};
 
   // the pool has 2 object, and 10 as the hard max objects limit
-  // the lambda that invokes the ctor registered is objectCreatorFun()
-  a_op aPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+  // the lambda that invokes the ctor registered is objectFactoryFun()
+  a_op aPool(objectFactoryFun, poolSize, hardMaxObjectsLimit);
 
   // check the initial conditions
   ASSERT_EQ(poolSize, aPool.getFreeListSize());
@@ -740,7 +740,7 @@ TEST (objectPoolWithCreator, test_1)
   auto& vr1 = *o1.get();
 
   // check the object's attribute values set by the non-default ctor invoked by
-  // objectCreatorFun()
+  // objectFactoryFun()
   ASSERT_EQ(S, vr1.get_s());
   ASSERT_EQ(X, vr1.get_x());
   ASSERT_EQ(Y, vr1.get_y());
@@ -864,9 +864,9 @@ TEST (objectPoolWithCreator, test_2)
   const auto Y {34};
   auto Z {56};
   aCtorTuple t {S, X, Y, Z};
-  object_creator::objectCreatorFun<A> objectCreatorFun {};
+  object_factory::objectFactoryFun<A> objectFactoryFun {};
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<A, const decltype(t)>
+  objectFactoryFun = object_factory::createObjectFactoryFun<A, const decltype(t)>
                             (std::forward<const decltype(t)>(t));
 
   // Let's create a pool of A's objects
@@ -876,8 +876,8 @@ TEST (objectPoolWithCreator, test_2)
   const auto hardMaxObjectsLimit {10};
 
   // the pool has 2 object, and 10 as the hard max objects limit
-  // the lambda that invokes the ctor registered is objectCreatorFun()
-  a_op aPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+  // the lambda that invokes the ctor registered is objectFactoryFun()
+  a_op aPool(objectFactoryFun, poolSize, hardMaxObjectsLimit);
 
   // check the initial conditions
   ASSERT_EQ(poolSize, aPool.getFreeListSize());
@@ -896,7 +896,7 @@ TEST (objectPoolWithCreator, test_2)
   auto& vr1 = *o1.get();
 
   // check the object's attribute values set by the non-default ctor invoked by
-  // objectCreatorFun()
+  // objectFactoryFun()
   ASSERT_EQ(S, vr1.get_s());
   ASSERT_EQ(X, vr1.get_x());
   ASSERT_EQ(Y, vr1.get_y());
@@ -1112,17 +1112,17 @@ TEST (objectPoolWithCreator, multiThreadedTest_1)
   auto S {"-init-"};
   auto K {-1};
   bCtorTuple t {S, K};
-  object_creator::objectCreatorFun<B> objectCreatorFun {};
+  object_factory::objectFactoryFun<B> objectFactoryFun {};
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<B, const decltype(t)>
+  objectFactoryFun = object_factory::createObjectFactoryFun<B, const decltype(t)>
                             (std::forward<const decltype(t)>(t));
 
   const auto poolSize {2};
   const auto hardMaxObjectsLimit {1'000};
 
   // the pool has 2 object, and 1'000 as the hard max objects limit
-  // the lambda that invokes the ctor registered is objectCreatorFun()
-  b_op bPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+  // the lambda that invokes the ctor registered is objectFactoryFun()
+  b_op bPool(objectFactoryFun, poolSize, hardMaxObjectsLimit);
 
   // reset objects when returned to the pool (this is the default)
 
@@ -1188,17 +1188,17 @@ TEST (objectPoolWithCreator, multiThreadedTest_2)
   auto S {"-init-"};
   auto K {-1};
   bCtorTuple t {S, K};
-  object_creator::objectCreatorFun<B> objectCreatorFun {};
+  object_factory::objectFactoryFun<B> objectFactoryFun {};
 
-  objectCreatorFun = object_creator::createObjectCreatorFun<B, const decltype(t)>
+  objectFactoryFun = object_factory::createObjectFactoryFun<B, const decltype(t)>
                             (std::forward<const decltype(t)>(t));
 
   const auto poolSize {2};
   const auto hardMaxObjectsLimit {1'000};
 
   // the pool has 2 object, and 1'000 as the hard max objects limit
-  // the lambda that invokes the ctor registered is objectCreatorFun()
-  b_op bPool(objectCreatorFun, poolSize, hardMaxObjectsLimit);
+  // the lambda that invokes the ctor registered is objectFactoryFun()
+  b_op bPool(objectFactoryFun, poolSize, hardMaxObjectsLimit);
 
   // do NOT reset the objects when returned to the pool
   bPool.doNotResetObjects();

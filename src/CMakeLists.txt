@@ -174,7 +174,7 @@ MESSAGE( STATUS "CMAKE_RANLIB: " ${CMAKE_RANLIB} )
 
 # ------------------------- End of Generic CMake Variable Logging ------------------
 
-SET( sources_list objectCreator.h objectPool.cpp objectPool.h )
+SET( sources_list objectFactory.h objectPool.cpp objectPool.h )
 
 ADD_LIBRARY( object-pool ${sources_list} )
 

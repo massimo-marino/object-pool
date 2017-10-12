@@ -17,18 +17,18 @@
  */
 
 /* 
- * File:   objectCreator.h
+ * File:   objectFactory.h
  * Author: massimo
  *
  * Created on September 20, 2017, 1:15 PM
  */
 
-#ifndef OBJECTCREATOR_H
-#define OBJECTCREATOR_H
+#ifndef OBJECTFACTORY_H
+#define OBJECTFACTORY_H
 
 #include <memory>
 ////////////////////////////////////////////////////////////////////////////////
-namespace object_creator
+namespace object_factory
 {
 // create an object of type T and return a std::unique_ptr to it
 template <typename T, typename... Args>
@@ -39,10 +39,10 @@ auto createUniquePtr(Args&&... args) -> std::unique_ptr<T>
 }
 
 template <typename T>
-using objectCreatorFun = std::function<std::unique_ptr<T>(void)>;
+using objectFactoryFun = std::function<std::unique_ptr<T>(void)>;
 
 template <typename T, typename... Args>
-auto createObjectCreatorFun(Args&&... args) noexcept -> objectCreatorFun<T>
+auto createObjectFactoryFun(Args&&... args) noexcept -> objectFactoryFun<T>
 {
   // return a function object for creating T's objects with the given arguments
   // to be passed to its constructor
@@ -51,6 +51,6 @@ auto createObjectCreatorFun(Args&&... args) noexcept -> objectCreatorFun<T>
            return createUniquePtr<T>(std::forward<Args>(args)...);
          };
 }
-}  // namespace object_creator
-#endif /* OBJECTCREATOR_H */
+}  // namespace object_factory
+#endif /* OBJECTFACTORY_H */
 
