@@ -17,7 +17,7 @@
 using namespace ::testing;
 ////////////////////////////////////////////////////////////////////////////////
 // Tests
-TEST (objectCreator, test_1)
+TEST (objectFactory, test_1)
 {
   class A
   {
