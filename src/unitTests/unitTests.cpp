@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 #include "../objectPool.h"
 #include <future>
 #include <gtest/gtest.h>
@@ -86,7 +80,7 @@ TEST (objectFactory, test_1)
                 << ", "
                 << get_z()
                 << ")"
-                << std::endl;
+                << '\n';
     }
 
     A(const A& rhs) = delete;
@@ -207,7 +201,7 @@ TEST(objectPool, test_2)
     CA() : m_x(8) {}
     ~CA()
     {
-      std::clog << "CA dtor called: m_x is " << m_x << std::endl;
+      std::clog << "CA dtor called: m_x is " << m_x << '\n';
     }
   };
 
@@ -242,7 +236,7 @@ TEST(objectPool, test_3)
         std::clog << "Constructed object " << m_id << "\r";
         return;
       }
-      std::clog << "Constructed object " << m_id << std::endl;
+      std::clog << "Constructed object " << m_id << '\n';
     }
 
     ~CA()
@@ -253,7 +247,7 @@ TEST(objectPool, test_3)
         std::clog << "Destroyed object   " << m_id << "\r";
         return;
       }
-      std::clog << "Destroyed object   " << m_id << std::endl;
+      std::clog << "Destroyed object   " << m_id << '\n';
     }
   };
 
@@ -322,7 +316,7 @@ TEST(objectPool, test_4)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << iPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST(objectPool, test_5)
@@ -339,7 +333,7 @@ TEST(objectPool, test_5)
 
     ~CA()
     {
-      std::clog << "CA dtor called - m_x set to " << m_x << std::endl;
+      std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
 
     CA(const CA& rhs) = default;
@@ -420,7 +414,7 @@ TEST(objectPool, test_5)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << caPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST(objectPool, test_5A)
@@ -437,7 +431,7 @@ TEST(objectPool, test_5A)
 
     ~CA()
     {
-      std::clog << "CA dtor called - m_x set to " << m_x << std::endl;
+      std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
 
     CA(const CA& rhs) = delete;
@@ -482,7 +476,7 @@ TEST(objectPool, test_5A)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << caPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST(objectPool, test_6)
@@ -499,7 +493,7 @@ TEST(objectPool, test_6)
 
     ~CA()
     {
-      std::clog << "CA dtor called - m_x set to " << m_x << std::endl;
+      std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
 
     CA(const CA& rhs) = delete;
@@ -545,7 +539,7 @@ TEST(objectPool, test_6)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << caPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST(objectPool, test_7)
@@ -562,7 +556,7 @@ TEST(objectPool, test_7)
 
     ~CA()
     {
-      std::clog << "CA dtor called - m_x set to " << m_x << std::endl;
+      std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
 
     CA(const CA& rhs) = delete;
@@ -615,7 +609,7 @@ TEST(objectPool, test_7)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << caPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST (objectPoolWithCreator, test_1)
@@ -684,7 +678,7 @@ TEST (objectPoolWithCreator, test_1)
                 << ", "
                 << get_z()
                 << ")"
-                << std::endl;
+                << '\n';
     }
 
     A(const A& rhs) = delete;
@@ -777,7 +771,7 @@ TEST (objectPoolWithCreator, test_1)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << aPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST (objectPoolWithCreator, test_2)
@@ -845,7 +839,7 @@ TEST (objectPoolWithCreator, test_2)
                 << ", "
                 << get_z()
                 << ")"
-                << std::endl;
+                << '\n';
     }
 
     A(const A& rhs) = delete;
@@ -933,7 +927,7 @@ TEST (objectPoolWithCreator, test_2)
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << aPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1014,7 +1008,7 @@ class B
               << ", "
               << get_reuseCounter()
               << ")"
-              << std::endl;
+              << '\n';
   }
 };  // class B
 
@@ -1038,7 +1032,7 @@ static void threadBody(b_op& aPool,
 {
    std::clog << "[" << func << "] "
             << "STARTED"
-            << std::endl;
+            << '\n';
 
   // get 1 object from the pool
   auto [o1, of1] = aPool.acquireObject();
@@ -1078,7 +1072,7 @@ static void threadBody(b_op& aPool,
 
   std::clog << "[" << func << "] "
             << "TERMINATED"
-            << std::endl; 
+            << '\n'; 
 }  // threadBody
 
 static void clientThread_1 (b_op& aPool)
@@ -1165,21 +1159,21 @@ TEST (objectPoolWithCreator, multiThreadedTest_1)
   {
     std::clog << "EXCEPTION: "
               << e.what()
-              << std::endl;
+              << '\n';
   }
 ////////////////////////////////////////////////////////////////////////////////
 
   // check the current conditions
   std::clog << "Objects in the free list after the threads' termination: "
             << bPool.getFreeListSize()
-            << std::endl;
+            << '\n';
   ASSERT_TRUE(bPool.getNumberOfObjectsCreated() >= 102);
   ASSERT_EQ(false, bPool.checkObjectsOverflow());
 
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << bPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 TEST (objectPoolWithCreator, multiThreadedTest_2)
@@ -1242,21 +1236,21 @@ TEST (objectPoolWithCreator, multiThreadedTest_2)
   {
     std::clog << "EXCEPTION: "
               << e.what()
-              << std::endl;
+              << '\n';
   }
 ////////////////////////////////////////////////////////////////////////////////
 
   // check the current conditions
   std::clog << "Objects in the free list after the threads' termination: "
             << bPool.getFreeListSize()
-            << std::endl;
+            << '\n';
   ASSERT_TRUE(bPool.getNumberOfObjectsCreated() >= 102);
   ASSERT_EQ(false, bPool.checkObjectsOverflow());
 
   // pool destroyed here when aPool goes out of scope
   std::clog << "Object pool being destroyed now... total objects in the pool: "
             << bPool.getNumberOfObjectsCreated()
-            << std::endl;
+            << '\n';
 }
 
 #pragma clang diagnostic pop
