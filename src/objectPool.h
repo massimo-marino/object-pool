@@ -92,11 +92,10 @@ class objectPoolBase
   explicit objectPoolBase();
   explicit objectPoolBase(const int64_t poolSize,
                           const int64_t highWaterMark) noexcept(false);
-  ~objectPoolBase() = default;
+  virtual ~objectPoolBase();
 
   // we don't want these objects allocated on the heap
   void* operator new(std::size_t) = delete;
-  void operator delete(void*) = delete;
   objectPoolBase(const objectPoolBase& src) = delete;
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
 
@@ -143,7 +142,6 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
  public:
   // we don't want these objects allocated on the heap
   void* operator new(std::size_t) = delete;
-  void operator delete(void*) = delete;
 
   explicit objectPool() noexcept(false) :
   objectPool(m_kDefaultPoolSize)

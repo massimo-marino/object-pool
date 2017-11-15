@@ -36,5 +36,8 @@ m_HighWaterMark(static_cast<size_t>(highWaterMark))
     throw std::invalid_argument("high water mark must be greater than pool size");
   }
 }
+
+objectPoolBase::~objectPoolBase()
+{}
 }  // namespace object_pool
 ////////////////////////////////////////////////////////////////////////////////
