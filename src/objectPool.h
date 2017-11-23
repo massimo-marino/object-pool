@@ -65,25 +65,35 @@ class objectPoolBase
   // by default the objects are reset when restored in the pool
   mutable bool m_doResetObjects {true};
 
-  size_t _getNumberOfObjectsCreated() const noexcept
+  constexpr
+  size_t
+  _getNumberOfObjectsCreated() const noexcept
   {
     return m_objectsCreated;
   }
 
-  bool _checkObjectsOverflow () const noexcept
+  constexpr
+  bool
+  _checkObjectsOverflow () const noexcept
   {
     return (_getNumberOfObjectsCreated() > m_HighWaterMark);
   }
 
-  void _doResetObjects() const noexcept
+  constexpr
+  void
+  _doResetObjects() const noexcept
   {
     m_doResetObjects = true;
   }
-  void _doNotResetObjects() const noexcept
+  constexpr
+  void
+  _doNotResetObjects() const noexcept
   {
     m_doResetObjects = false;
   }
-  bool _getResetObjectsFlag() const noexcept
+  constexpr
+  bool
+  _getResetObjectsFlag() const noexcept
   {
     return m_doResetObjects;
   }
@@ -100,33 +110,38 @@ class objectPoolBase
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
 
  public:
-  size_t getNumberOfObjectsCreated() const noexcept
+  size_t
+  getNumberOfObjectsCreated() const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
     return m_objectsCreated;
   }
 
-  bool checkObjectsOverflow () const noexcept
+  bool
+  checkObjectsOverflow () const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
     return (_getNumberOfObjectsCreated() > m_HighWaterMark);
   }
   
-  void doResetObjects() const noexcept
+  void
+  doResetObjects() const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
     m_doResetObjects = true;
   }
-  void doNotResetObjects() const noexcept
+  void
+  doNotResetObjects() const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
     m_doResetObjects = false;
   }
-  bool getResetObjectsFlag() const noexcept
+  bool
+  getResetObjectsFlag() const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
@@ -137,13 +152,15 @@ class objectPoolBase
 template <typename T>
 class objectPool final : public objectPoolBase
 {
-using objectPoolStatus = std::tuple<size_t, size_t, bool>;
+  using objectPoolStatus = std::tuple<size_t, size_t, bool>;
 
  public:
   // we don't want these objects allocated on the heap
   void* operator new(std::size_t) = delete;
 
-  explicit objectPool() noexcept(false) :
+  explicit
+  objectPool() noexcept(false)
+  :
   objectPool(m_kDefaultPoolSize)
   {}
 
@@ -160,8 +177,9 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
   // Throw invalid_argument if poolSize or highWaterMark is <= 0 or if
   // poolSize > highWaterMark
   // Throw bad_alloc if allocation fails
-  explicit objectPool(const int64_t poolSize,
-                      const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
+  explicit
+  objectPool(const int64_t poolSize,
+             const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
   :
   objectPoolBase(poolSize, highWaterMark)
   {
@@ -170,9 +188,10 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
   }
 
   // this ctor is used when a non-default ctor for T is provided as an object_creator::object_creator_fun<T> f
-  explicit objectPool(object_factory::objectFactoryFun<T> f,
-                      const int64_t poolSize,
-                      const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
+  explicit
+  objectPool(object_factory::objectFactoryFun<T> f,
+             const int64_t poolSize,
+             const int64_t highWaterMark = m_kdefaultHighWaterMark) noexcept(false)
   :
   objectPoolBase(poolSize, highWaterMark),
   m_f(f)
@@ -189,7 +208,8 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
   using Object = std::shared_ptr<T>;
 
   // Reserve an object for use
-  auto acquireObject() const noexcept(false) -> std::tuple<Object, bool>
+  auto
+  acquireObject() const noexcept(false) -> std::tuple<Object, bool>
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
@@ -226,7 +246,8 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
                            isObjectOverflow );
   }  // acquireObject
 
-  size_t getFreeListSize() const noexcept
+  size_t
+  getFreeListSize() const noexcept
   {
     std::lock_guard<std::mutex> mlg(m_mx);
 
@@ -234,7 +255,6 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
   }
 
  private:
-
   // object used to reset pool's objects when returned to the pool
   mutable T m_defaultResetObject{};
 
@@ -249,7 +269,8 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
   objectPool& operator=(const objectPool& rhs) = default;
 
   // Allocates m_poolSize new objects and adds them to m_FreeList
-  auto allocatePool() const noexcept(false) -> objectPoolStatus
+  auto
+  allocatePool() const noexcept(false) -> objectPoolStatus
   {
     // generate a lambda that will invoke the right ctor
     std::function<std::unique_ptr<T>()> lambdaCtor {};
@@ -281,12 +302,16 @@ using objectPoolStatus = std::tuple<size_t, size_t, bool>;
                            _checkObjectsOverflow() );
   }  // allocatePool
 
-  size_t _getFreeListSize() const noexcept
+  constexpr
+  size_t
+  _getFreeListSize() const noexcept
   {
     return m_FreeList.size();
   }
 
-  void resetObject(T& object) const noexcept
+  constexpr
+  void
+  resetObject(T& object) const noexcept
   {
     object = m_defaultResetObject;
   }
