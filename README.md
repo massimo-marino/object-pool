@@ -1,5 +1,5 @@
 # object-pool
-C++14/C++17 implementation of an object pool pattern
+C++17 implementation of an object pool pattern
 
 #### Description
 
@@ -48,9 +48,13 @@ See the unit tests for examples of use.
 
 #### Requirements
 
-The cmake files compile with `-std=c++1z`.
+`cmake` is used to compile the sources.
 
-Cmake file uses `clang++-4.0` by default: install clang 4.0, or another release and in this case change the cmake file.
+The default compiler used is `clang++-5.0`.
+
+The cmake files compile with `-std=c++17`.
+
+The unit tests are implemented in `googletest`: be sure you have installed `googletest` to compile.
 
 
 #### Install

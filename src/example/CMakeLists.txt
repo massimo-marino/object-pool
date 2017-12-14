@@ -2,22 +2,20 @@ cmake_minimum_required(VERSION 3.5)
 
 PROJECT( object-pool-example )
 
-#### settings for g++
-#SET (CMAKE_CXX_COMPILER g++)
-#SET (CLANG_CXX_FLAGS "-Wno-unknown-pragmas")
-#### settings for g++
-
-#### settings for clang
-SET (CMAKE_CXX_COMPILER "clang++-4.0")
-#SET (CLANG_CXX_FLAGS "-Weverything -Wno-c++98-compat -fno-assume-sane-operator-new -fsanitize=undefined")
-SET (CLANG_CXX_FLAGS "-Weverything -Wno-c++98-compat -fno-assume-sane-operator-new")
-#### settings for clang
-
-SET (CMAKE_CXX_FLAGS "${CLANG_CXX_FLAGS} -DDO_LOGS -std=c++1z -flto -mtune=native -march=native -m64 -Ofast -ffast-math -pthread -pedantic -pedantic-errors -Wall -Weffc++ -Wextra -Wfatal-errors -I/usr/include -I. -lm")
-
+################################################################################
+#### settings for clang 5.0
+SET (CMAKE_CXX_COMPILER "clang++-5.0")
+SET (CLANG_CXX_FLAGS "-DDO_LOGS -std=c++17 -Ofast -ffast-math -pthread -pedantic -pedantic-errors -Wall -Weffc++ -Wextra -Wfatal-errors -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -fno-assume-sane-operator-new -flto")
+####SET (CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -fsanitize=undefined")
+SET (CMAKE_CXX_FLAGS "${CLANG_CXX_FLAGS} -mtune=native -march=native -m64 -lm -lpthread")
+### use libstdc++
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
+### use libc++
+#SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
 SET (CMAKE_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu")
+################################################################################
 
-SET( CMAKE_VERBOSE_MAKEFILE on )
+SET (CMAKE_VERBOSE_MAKEFILE on )
 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
 
