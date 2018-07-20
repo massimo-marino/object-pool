@@ -4,8 +4,8 @@ PROJECT( object-pool-unit-tests )
 
 ################################################################################
 #### settings for clang 5.0
-SET (CMAKE_CXX_COMPILER "clang++-5.0")
-SET (CLANG_CXX_FLAGS "-std=c++17 -Ofast -ffast-math -pthread -pedantic -pedantic-errors -Wall -Weffc++ -Wextra -Wfatal-errors -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -fno-assume-sane-operator-new -flto")
+SET (CMAKE_CXX_COMPILER "/clang_5.0.0/bin/clang++-5.0")
+SET (CLANG_CXX_FLAGS "-std=c++17 -Ofast -ffast-math -pthread -pedantic -pedantic-errors -Wall -Weffc++ -Wextra -Wfatal-errors -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -fno-assume-sane-operator-new")
 ####SET (CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -fsanitize=undefined")
 SET (CMAKE_CXX_FLAGS "${CLANG_CXX_FLAGS} -mtune=native -march=native -m64 -lm -lrt -ldl -lgtest_dll -lgtest_main")
 ### use libstdc++

@@ -4,9 +4,7 @@
  *
  * Created on April 12, 2017, 8:17 PM
  */
-
-#ifndef COBJECTPOOL_H
-#define COBJECTPOOL_H
+#pragma once
 
 #include "objectFactory.h"
 #include <mutex>
@@ -65,6 +63,13 @@ class objectPoolBase
   // by default the objects are reset when restored in the pool
   mutable bool m_doResetObjects {true};
 
+  // delegating ctor
+  explicit objectPoolBase();
+  explicit objectPoolBase(int64_t poolSize,
+                          int64_t highWaterMark) noexcept(false);
+
+  virtual ~objectPoolBase();
+
   constexpr
   size_t
   _getNumberOfObjectsCreated() const noexcept
@@ -79,13 +84,14 @@ class objectPoolBase
     return (_getNumberOfObjectsCreated() > m_HighWaterMark);
   }
 
-  constexpr
+  inline
   void
   _doResetObjects() const noexcept
   {
     m_doResetObjects = true;
   }
-  constexpr
+
+  inline
   void
   _doNotResetObjects() const noexcept
   {
@@ -98,18 +104,13 @@ class objectPoolBase
     return m_doResetObjects;
   }
 
-  // delegating ctor
-  explicit objectPoolBase();
-  explicit objectPoolBase(const int64_t poolSize,
-                          const int64_t highWaterMark) noexcept(false);
-  virtual ~objectPoolBase();
-
-  // we don't want these objects allocated on the heap
-  void* operator new(std::size_t) = delete;
+ public:
+  // copy ctor deleted
   objectPoolBase(const objectPoolBase& src) = delete;
+  // copy assignment deleted
   objectPoolBase& operator=(const objectPoolBase& rhs) = delete;
 
- public:
+  inline
   size_t
   getNumberOfObjectsCreated() const noexcept
   {
@@ -118,6 +119,7 @@ class objectPoolBase
     return m_objectsCreated;
   }
 
+  inline
   bool
   checkObjectsOverflow () const noexcept
   {
@@ -125,7 +127,8 @@ class objectPoolBase
 
     return (_getNumberOfObjectsCreated() > m_HighWaterMark);
   }
-  
+
+  inline
   void
   doResetObjects() const noexcept
   {
@@ -133,6 +136,7 @@ class objectPoolBase
 
     m_doResetObjects = true;
   }
+  inline
   void
   doNotResetObjects() const noexcept
   {
@@ -140,6 +144,7 @@ class objectPoolBase
 
     m_doResetObjects = false;
   }
+  inline
   bool
   getResetObjectsFlag() const noexcept
   {
@@ -155,17 +160,13 @@ class objectPool final : public objectPoolBase
   using objectPoolStatus = std::tuple<size_t, size_t, bool>;
 
  public:
-  // we don't want these objects allocated on the heap
-  void* operator new(std::size_t) = delete;
-
   explicit
   objectPool() noexcept(false)
   :
   objectPool(m_kDefaultPoolSize)
   {}
 
-  ~objectPool() = default;
-
+  // copy ctor deleted
   objectPool(const objectPool& src) = delete;
 
   // Create an object pool with poolSize objects.
@@ -187,7 +188,8 @@ class objectPool final : public objectPoolBase
     allocatePool();
   }
 
-  // this ctor is used when a non-default ctor for T is provided as an object_creator::object_creator_fun<T> f
+  // this ctor is used when a non-default ctor for T is provided as an
+  // object_creator::object_creator_fun<T> f
   explicit
   objectPool(object_factory::objectFactoryFun<T> f,
              const int64_t poolSize,
@@ -246,6 +248,7 @@ class objectPool final : public objectPoolBase
                            isObjectOverflow );
   }  // acquireObject
 
+  inline
   size_t
   getFreeListSize() const noexcept
   {
@@ -255,6 +258,9 @@ class objectPool final : public objectPoolBase
   }
 
  private:
+  // default copy assignment needed because of the method resetObject()
+  objectPool& operator=(const objectPool& rhs) = default;
+
   // object used to reset pool's objects when returned to the pool
   mutable T m_defaultResetObject{};
 
@@ -264,9 +270,6 @@ class objectPool final : public objectPoolBase
   // the lambda that invokes a non-default ctor registered at object pool
   // creation; it's nullptr if not registered
   object_factory::objectFactoryFun<T> m_f {};
-
-  // needed because of the method resetObject()
-  objectPool& operator=(const objectPool& rhs) = default;
 
   // Allocates m_poolSize new objects and adds them to m_FreeList
   auto
@@ -291,7 +294,7 @@ class objectPool final : public objectPoolBase
                    };
     }
 
-    for (size_t i = 0; i < m_poolSize; ++i)
+    for (size_t i {0}; i < m_poolSize; ++i)
     {
       m_FreeList.emplace(lambdaCtor());
       ++m_objectsCreated;
@@ -309,7 +312,7 @@ class objectPool final : public objectPoolBase
     return m_FreeList.size();
   }
 
-  constexpr
+  inline
   void
   resetObject(T& object) const noexcept
   {
@@ -317,5 +320,3 @@ class objectPool final : public objectPoolBase
   }
 };  // class ObjectPool
 }  // namespace object_pool
-
-#endif  // COBJECTPOOL_H

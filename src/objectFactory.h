@@ -4,9 +4,7 @@
  *
  * Created on September 20, 2017, 1:15 PM
  */
-
-#ifndef OBJECTFACTORY_H
-#define OBJECTFACTORY_H
+#pragma once
 
 #include <memory>
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,5 +34,3 @@ createObjectFactoryFun(Args&&... args) noexcept -> objectFactoryFun<T>
          };
 }
 }  // namespace object_factory
-#endif /* OBJECTFACTORY_H */
-

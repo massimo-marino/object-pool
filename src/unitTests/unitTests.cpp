@@ -7,6 +7,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
 #pragma clang diagnostic ignored "-Wglobal-constructors"
+#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
+#pragma clang diagnostic ignored "-Wpadded"
 
 using namespace ::testing;
 ////////////////////////////////////////////////////////////////////////////////
@@ -15,9 +17,9 @@ TEST (objectFactory, test_1)
 {
   class A
   {
-    mutable int _x{};
-    mutable int _y{};
-    mutable int _z{};
+    mutable int _x {0};
+    mutable int _y {0};
+    mutable int _z {0};
 
    public:
     explicit
@@ -83,9 +85,6 @@ TEST (objectFactory, test_1)
                 << '\n';
     }
 
-    A(const A& rhs) = delete;
-    A& operator=(const A& rhs) = delete;
-
     ~A()
     {
       std::cout << "Destroyed object: ";
@@ -134,11 +133,10 @@ TEST (objectFactory, test_1)
     objectFactoryFun = object_factory::createObjectFactoryFun<A,
                                                               const int,
                                                               const int,
-                                                              const int>
-                                                              (99, 88, 77);
+                                                              const int>(99, 88, 77);
 
     std::vector<Object> v {};
-    for (int i = 1; i <= 5; ++i)
+    for (int i {1}; i <= 5; ++i)
     {
       // create an object that can be used in this scope only
       Object o = objectFactoryFun();
@@ -199,6 +197,7 @@ TEST(objectPool, test_2)
 
   public:
     CA() : m_x(8) {}
+
     ~CA()
     {
       std::clog << "CA dtor called: m_x is " << m_x << '\n';
@@ -218,15 +217,16 @@ TEST(objectPool, test_2)
 
 TEST(objectPool, test_3)
 {
-  static const auto poolSize {1'000};
-  static auto ctorCalls {0};
-  static auto dtorCalls {0};
+  static const int poolSize {1'000};
+  static int ctorCalls {0};
+  static int dtorCalls {0};
 
   class CA
   {
     int m_id {};
 
   public:
+
     CA()
     :
     m_id(++ctorCalls)
@@ -331,13 +331,20 @@ TEST(objectPool, test_5)
     // By default the attribute is set to initDefaultValue
     explicit CA() : m_x(initDefaultValue) {}
 
+    CA(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+    }
+    CA& operator=(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+      return *this;
+    }
+
     ~CA()
     {
       std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
-
-    CA(const CA& rhs) = default;
-    CA& operator=(const CA& rhs) = default;
 
     int get_x () const noexcept
     {
@@ -393,8 +400,8 @@ TEST(objectPool, test_5)
     
     // reference to the value of o1
     auto& vr1 = *(o1.get());
-    // copying the value in v1 is not allowed
-    //auto v1 = *(o1.get());
+    // copying the value in v1 is allowed
+    auto v1 = *(o1.get());
 
     ASSERT_EQ(initDefaultValue, o1.get()->get_x() );
     ASSERT_EQ(initDefaultValue, vr1.get_x() );
@@ -429,13 +436,21 @@ TEST(objectPool, test_5A)
     // By default the attribute is set to initDefaultValue
     explicit CA() : m_x(initDefaultValue) {}
 
+    CA(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+    }
+
+    CA& operator=(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+      return *this;
+    }
+
     ~CA()
     {
       std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
-
-    CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = default;
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -491,13 +506,21 @@ TEST(objectPool, test_6)
     // By default the attribute is set to initDefaultValue
     explicit CA() : m_x(initDefaultValue) {}
 
+    CA(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+    }
+
+    CA& operator=(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+      return *this;
+    }
+
     ~CA()
     {
       std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
-
-    CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = default;
   };  // class CA
 
   // Let's create a pool of CA's objects
@@ -522,7 +545,7 @@ TEST(objectPool, test_6)
     // Acquire objectsToAcquire objects from the pool and push back them in vector v
     // Since the object pool has been created with 1 object, objectsToAcquire-1
     // more objects will be created
-    for (int i = 1; i <= objectsToAcquire; ++i)
+    for (int i {1}; i <= objectsToAcquire; ++i)
     {
       auto [o1, of1] = caPool.acquireObject();
       v.push_back(o1);
@@ -554,13 +577,21 @@ TEST(objectPool, test_7)
     // By default the attribute is set to initDefaultValue
     explicit CA() : m_x(initDefaultValue) {}
 
+    CA(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+    }
+
+    CA& operator=(const CA& rhs)
+    {
+      m_x = rhs.m_x;
+      return *this;
+    }
+
     ~CA()
     {
       std::clog << "CA dtor called - m_x set to " << m_x << '\n';
     }
-
-    CA(const CA& rhs) = delete;
-    CA& operator=(const CA& rhs) = default;
 
     void set_x(const int x) const noexcept
     {
@@ -590,7 +621,7 @@ TEST(objectPool, test_7)
     // Acquire 1500 objects from the pool and push back them in vector v
     // Since the object pool has been created with 1 object, 1499 more objects will
     // be created
-    for (int i = 1; i <= objectsToAcquire; ++i)
+    for (int i {1}; i <= objectsToAcquire; ++i)
     {
       auto [o1, of1] = caPool.acquireObject();
       // Just change the attribute value to the current index value
@@ -681,8 +712,14 @@ TEST (objectPoolWithCreator, test_1)
                 << '\n';
     }
 
-    A(const A& rhs) = delete;
-    A& operator=(const A& rhs) = default;
+    A& operator=(const A& rhs)
+            {
+              _s = rhs._s;
+              _x = rhs._x;
+              _y = rhs._y;
+              _z = rhs._z;
+              return *this;
+            }
 
     ~A()
     {
@@ -747,7 +784,7 @@ TEST (objectPoolWithCreator, test_1)
     {
       // acquire objectsToAcquire objects from the pool; since the object pool is
       // empty then objectsToAcquire more objects are created
-      for (int i = 1; i <= objectsToAcquire; ++i)
+      for (int i {1}; i <= objectsToAcquire; ++i)
       {
         auto [o, f] = aPool.acquireObject();
         // Just change the attribute value to the current index value
@@ -842,8 +879,22 @@ TEST (objectPoolWithCreator, test_2)
                 << '\n';
     }
 
-    A(const A& rhs) = delete;
-    A& operator=(const A& rhs) = default;
+    A(const A& rhs)
+    {
+      _s = rhs._s;
+      _x = rhs._x;
+      _y = rhs._y;
+      _z = rhs._z;
+    }
+
+    A& operator=(const A& rhs)
+    {
+      _s = rhs._s;
+      _x = rhs._x;
+      _y = rhs._y;
+      _z = rhs._z;
+      return *this;
+    }
 
     ~A()
     {
@@ -903,7 +954,7 @@ TEST (objectPoolWithCreator, test_2)
     {
       // acquire objectsToAcquire objects from the pool; since the object pool is
       // empty then objectsToAcquire more objects are created
-      for (int i = 1; i <= objectsToAcquire; ++i)
+      for (int i {1}; i <= objectsToAcquire; ++i)
       {
         auto [o, f] = aPool.acquireObject();
         // Just change the attribute value to the current index value
@@ -959,8 +1010,20 @@ class B
     display_object();
   }
 
-  B(const B& rhs) = delete;
-  B& operator=(const B& rhs) = default;
+  B(const B& rhs)
+  {
+    _s = rhs._s;
+    _k = rhs._k;
+    _reuseCounter = rhs._reuseCounter;
+  }
+
+  B& operator=(const B& rhs)
+  {
+    _s = rhs._s;
+    _k = rhs._k;
+    _reuseCounter = rhs._reuseCounter;
+    return *this;
+  }
 
   ~B()
   {
@@ -1015,7 +1078,7 @@ class B
 static void allow (const int64_t& d = 0) noexcept
 {
   std::this_thread::yield();
-  if ( 0 == d)
+  if ( 0 == d )
   {
     return;
   }
@@ -1042,13 +1105,13 @@ static void threadBody(b_op& aPool,
   vr1.updateReuseCounter();
 
   const int objectsToAcquire {50};
-  for (unsigned int loops = 1; loops <= 10; ++loops)
+  for (unsigned int loops {1}; loops <= 10; ++loops)
   {
     // create a vector of objects
     std::vector<decltype(o1)> v {};
     {
       // acquire objectsToAcquire objects from the pool;
-      for (int i = 1; i <= objectsToAcquire; ++i)
+      for (int i {1}; i <= objectsToAcquire; ++i)
       {
         auto [o, f] = aPool.acquireObject();
         // append the function name to the string attribute value
@@ -1255,8 +1318,3 @@ TEST (objectPoolWithCreator, multiThreadedTest_2)
 
 #pragma clang diagnostic pop
 // END: ignore the warnings when compiled with clang up to here
-
-//int main(int argc, char **argv) {
-//  ::testing::InitGoogleTest(&argc, argv);
-//  return RUN_ALL_TESTS();
-//}
