@@ -1,11 +1,17 @@
-cmake_minimum_required(VERSION 3.5)
-
-PROJECT( object-pool-example )
+SET (THE_PROJECT object-pool-example)
+#
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+PROJECT(${THE_PROJECT})
 
 ################################################################################
-#### settings for clang 5.0
-SET (CMAKE_CXX_COMPILER "/clang_5.0.0/bin/clang++-5.0")
-SET (CMAKE_INCLUDE_PATH "-I. -I/clang_5.0.0/include/c++/v1" )
+#### settings for clang 9.0.0
+SET (CMAKE_CXX_COMPILER "/clang_9.0.0/bin/clang++")
+#SET (CMAKE_CXX_STANDARD 17)
+SET (CMAKE_INCLUDE_PATH "-I/clang_9.0.0/include/c++/v1 -I." )
+################################################################################
+##
+## for debugging add -pg and replace -Ofast with -O0: -pg -O0
+##
 SET (CLANG_CXX_FLAGS "-DDO_LOGS ${CMAKE_INCLUDE_PATH} -std=c++17 -Ofast -ffast-math -pthread -pedantic -pedantic-errors -Wall -Weffc++ -Wextra -Wfatal-errors -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -fno-assume-sane-operator-new")
 ####SET (CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -fsanitize=undefined")
 SET (CMAKE_CXX_FLAGS "${CLANG_CXX_FLAGS} -mtune=native -march=native -m64 -lm -lpthread")
@@ -13,10 +19,19 @@ SET (CMAKE_CXX_FLAGS "${CLANG_CXX_FLAGS} -mtune=native -march=native -m64 -lm -l
 #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
 ### use libc++
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-SET (CMAKE_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu")
+SET (CMAKE_EXPORT_COMPILE_COMMANDS on)
 ################################################################################
 
 SET (CMAKE_VERBOSE_MAKEFILE on )
+
+SET(SOURCES_LIST object-pool-example.cpp)
+SET (OBJ_EXECUTABLE object-pool-example)
+
+ADD_EXECUTABLE(${OBJ_EXECUTABLE} ${SOURCES_LIST})
+
+SET (LINKED_LIBS object-pool)
+
+TARGET_LINK_LIBRARIES (${OBJ_EXECUTABLE} LINK_PUBLIC ${LINKED_LIBS})
 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
 
@@ -171,9 +186,3 @@ MESSAGE( STATUS "CMAKE_RANLIB: " ${CMAKE_RANLIB} )
 MESSAGE( STATUS )
 
 # ------------------------- End of Generic CMake Variable Logging ------------------
-
-SET( sources_list object-pool-example.cpp )
-
-ADD_EXECUTABLE( object-pool-example ${sources_list} )
-
-TARGET_LINK_LIBRARIES (object-pool-example LINK_PUBLIC object-pool)

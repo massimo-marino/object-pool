@@ -1,10 +1,17 @@
-cmake_minimum_required(VERSION 3.5)
-
-PROJECT( object-pool-unit-tests )
+SET (THE_PROJECT object-pool-unit-tests)
+#
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+PROJECT(${THE_PROJECT})
 
 ################################################################################
-#### settings for clang 5.0
-SET (CMAKE_CXX_COMPILER "/clang_5.0.0/bin/clang++-5.0")
+#### settings for clang 9.0.0
+SET (CMAKE_CXX_COMPILER "/clang_9.0.0/bin/clang++")
+#SET (CMAKE_CXX_STANDARD 17)
+SET (CMAKE_INCLUDE_PATH "-I/clang_9.0.0/include/c++/v1 -I." )
+################################################################################
+##
+## for debugging add -pg and replace -Ofast with -O0: -pg -O0
+##
 SET (CLANG_CXX_FLAGS "-I. -I.. -std=c++17 -Ofast -ffast-math -pthread -pedantic -pedantic-errors -Wall -Weffc++ -Wextra -Wfatal-errors -Weverything -Wno-c++98-compat -Wno-c++98-compat-pedantic -fno-assume-sane-operator-new")
 ####SET (CLANG_CXX_FLAGS "${CLANG_CXX_FLAGS} -fsanitize=undefined")
 SET (GOOGLETEST_LIBS "-lgtest_dll -lgtest_main")
@@ -13,10 +20,17 @@ SET (CMAKE_CXX_FLAGS "${CLANG_CXX_FLAGS} -mtune=native -march=native -m64 -lm -l
 SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++")
 ### use libc++
 #SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-SET (CMAKE_LIBRARY_PATH "/usr/lib/x86_64-linux-gnu")
+SET (CMAKE_EXPORT_COMPILE_COMMANDS on)
 ################################################################################
 
 SET (CMAKE_VERBOSE_MAKEFILE on )
+
+SET (SOURCES_TO_BE_TESTED ../objectFactory.h ../objectPool.cpp ../objectPool.h)
+SET (UNIT_TESTS_SOURCES unitTests.cpp )
+SET (SOURCES_LIST ${UNIT_TESTS_SOURCES} ${SOURCES_TO_BE_TESTED} )
+SET (OBJ_EXECUTABLE unitTests)
+
+ADD_EXECUTABLE (${OBJ_EXECUTABLE} ${SOURCES_LIST})
 
 # ------------------------- Begin Generic CMake Variable Logging ------------------
 
@@ -171,7 +185,3 @@ MESSAGE( STATUS "CMAKE_RANLIB: " ${CMAKE_RANLIB} )
 MESSAGE( STATUS )
 
 # ------------------------- End of Generic CMake Variable Logging ------------------
-
-SET( sources_list unitTests.cpp ../objectFactory.h ../objectPool.cpp ../objectPool.h )
-
-ADD_EXECUTABLE( unitTests ${sources_list} )

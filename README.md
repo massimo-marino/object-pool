@@ -50,7 +50,7 @@ See the unit tests for examples of use.
 
 `cmake` is used to compile the sources.
 
-The default compiler used is `clang++-5.0`.
+The default compiler used is `clang++-9.0.0`.
 
 The cmake files compile with `-std=c++17`.
 
