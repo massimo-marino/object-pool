@@ -33,11 +33,11 @@ bottleneck.*
 
 
 It is also possible to create an object pool providing a non-default ctor for
-the objects that is registered and used at any new allocation when the pool
+the objects that are registered and used at any new allocation when the pool
 is empty
 
 
-Objects returned to the pool are reset by default
+Objects returned to the pool are reset by default.
 
 
 See: https://en.wikipedia.org/wiki/Object_pool_pattern
