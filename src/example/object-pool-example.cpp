@@ -1,8 +1,5 @@
 /* 
  * File:   object-pool-example.cpp
- * Author: massimo
- * 
- * Created on April 12, 2017, 8:17 PM
  */
 #include "objectPool.h"
 #include <iostream>
@@ -17,3 +14,4 @@ auto main() -> int
             << "TERMINATED"
             << std::endl;
 }  // main
+

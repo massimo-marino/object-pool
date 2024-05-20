@@ -1,14 +1,10 @@
+/*
+ * File:  unitTests.cpp
+ */
 #include "../objectPool.h"
 #include <future>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-// BEGIN: ignore the warnings listed below when compiled with clang from here
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-#pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
-#pragma clang diagnostic ignored "-Wpadded"
 
 using namespace ::testing;
 ////////////////////////////////////////////////////////////////////////////////
@@ -1316,5 +1312,3 @@ TEST (objectPoolWithCreator, multiThreadedTest_2)
             << '\n';
 }
 
-#pragma clang diagnostic pop
-// END: ignore the warnings when compiled with clang up to here

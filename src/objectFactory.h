@@ -1,8 +1,5 @@
 /* 
  * File:   objectFactory.h
- * Author: massimo
- *
- * Created on September 20, 2017, 1:15 PM
  */
 #pragma once
 
@@ -35,3 +32,4 @@ createObjectFactoryFun(Args&&... args) noexcept -> objectFactoryFun<T>
          };
 }
 }  // namespace object_factory
+

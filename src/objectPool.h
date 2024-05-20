@@ -1,8 +1,5 @@
 /* 
  * File:   objectPool.h
- * Author: massimo
- *
- * Created on April 12, 2017, 8:17 PM
  */
 #pragma once
 
@@ -50,8 +47,9 @@ namespace object_pool
 class objectPoolBase
 {
  protected:
-  static const int64_t m_kDefaultPoolSize;
-  static const int64_t m_kdefaultHighWaterMark;
+  static constexpr int64_t m_kDefaultPoolSize {10};
+  static constexpr int64_t m_kdefaultHighWaterMark {1'000};
+
   size_t m_poolSize;
   // the max number of objects allowed in the pool
   // this value is not enforced in this implementation: a client should check
@@ -64,11 +62,29 @@ class objectPoolBase
   mutable bool m_doResetObjects {true};
 
   // delegating ctor
-  explicit objectPoolBase();
-  explicit objectPoolBase(int64_t poolSize,
-                          int64_t highWaterMark) noexcept(false);
+  explicit objectPoolBase() : objectPoolBase(m_kDefaultPoolSize, m_kdefaultHighWaterMark)
+  {}
 
-  virtual ~objectPoolBase();
+  explicit objectPoolBase(int64_t poolSize,
+                          int64_t highWaterMark) noexcept(false) :
+  m_poolSize(static_cast<size_t>(poolSize)),
+  m_HighWaterMark(static_cast<size_t>(highWaterMark))
+  {
+    if ( poolSize <= 0 )
+    {
+      throw std::invalid_argument("pool size must be positive");
+    }
+    if ( highWaterMark <= 0 )
+    {
+      throw std::invalid_argument("high water mark must be positive");
+    }
+    if ( poolSize > highWaterMark )
+    {
+      throw std::invalid_argument("high water mark must be greater than pool size");
+    }
+  }
+
+  virtual ~objectPoolBase() = default;
 
   constexpr
   size_t
@@ -161,9 +177,7 @@ class objectPool final : public objectPoolBase
 
  public:
   explicit
-  objectPool() noexcept(false)
-  :
-  objectPool(m_kDefaultPoolSize)
+  objectPool() noexcept(false) : objectPool(m_kDefaultPoolSize)
   {}
 
   // copy ctor deleted
@@ -262,7 +276,7 @@ class objectPool final : public objectPoolBase
   objectPool& operator=(const objectPool& rhs) = default;
 
   // object used to reset pool's objects when returned to the pool
-  mutable T m_defaultResetObject{};
+  mutable T m_defaultResetObject {};
 
   // m_FreeList stores the objects that are not currently in use by clients
   mutable std::queue<std::unique_ptr<T>> m_FreeList {};
@@ -320,3 +334,4 @@ class objectPool final : public objectPoolBase
   }
 };  // class ObjectPool
 }  // namespace object_pool
+
